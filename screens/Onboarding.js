@@ -1,118 +1,73 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {  StyleSheet, Text, View } from 'react-native';
 import TextInput from '../components/Forms/TextInput';
 import Header from "../components/Header";
+import Footer from '../components/Footer';
 
 const Onboarding = () => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
 
-  // Validation rules
-  const nameIsValid = useMemo(() => {
+  // validity states
+  const [nameIsValid, setNameIsValid] = useState(false);
+  const [emailIsValid, setEmailIsValid] = useState(false);
+  const [formIsValid, setFormIsValid] = useState(false);
+
+  // Validate whenever inputs change. This approach centralizes validation
+  // logic and updates the derived `formIsValid` state which is passed to Footer.
+  useEffect(() => {
     const trimmed = firstName.trim();
-    if (!trimmed) return false;
-    // allow letters and spaces only
-    return /^[A-Za-z\s]+$/.test(trimmed);
-  }, [firstName]);
+    const nameValid = trimmed.length > 0 && /^[A-Za-z\s]+$/.test(trimmed);
+    setNameIsValid(nameValid);
 
-  const emailIsValid = useMemo(() => {
-    if (!email) return false;
-    // simple email regex
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }, [email]);
+    const emailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    setEmailIsValid(emailValid);
 
-  const formIsValid = nameIsValid && emailIsValid;
+    setFormIsValid(nameValid && emailValid);
+  }, [firstName, email]);
+
 
   return (
 
 
    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Header</Text>
-      </View>
+          <Header />
 
       {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.contentText}>Main Content Area</Text>
-      </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Footer</Text>
-      </View>
+    <View style={styles.content}>
+        <Text style={styles.title}>Let us get to know you</Text>
+
+                <Text style={styles.label}>First Name</Text>
+          <TextInput
+            style={[styles.input, !nameIsValid && firstName.length > 0 ? styles.inputError : null]}
+            value={firstName}
+            onChangeText={setFirstName}
+            accessibilityLabel="first-name"
+          />
+          {!nameIsValid && firstName.length > 0 ? (
+              <Text style={styles.errorText}>Please enter a valid name (letters and spaces only).</Text>
+            ) : null}
+
+
+
+                <Text style={styles.label}>Email</Text>
+         <TextInput
+            style={[styles.input, !emailIsValid && email.length > 0 ? styles.inputError : null]}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            accessibilityLabel="email"
+          />
+          {!emailIsValid && email.length > 0 ? (
+            <Text style={styles.errorText}>Please enter a valid email address.</Text>
+          ) : null}
+        </View>
+
+      <Footer formIsValid={formIsValid}/>
     </View>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // <View style={styles.container}>
-    //  <Header />
-
-    //   <View style={styles.content}>
-    //     <Text style={styles.title}>Let us get to know you better</Text>
-
-    //     <TextInput
-    //       style={[styles.input, !nameIsValid && firstName.length > 0 ? styles.inputError : null]}
-    //       placeholder="Enter your name"
-    //       value={firstName}
-    //       onChangeText={setFirstName}
-    //       accessibilityLabel="first-name"
-    //     />
-    //     {!nameIsValid && firstName.length > 0 ? (
-    //       <Text style={styles.errorText}>Please enter a valid name (letters and spaces only).</Text>
-    //     ) : null}
-
-    //     <TextInput
-    //       style={[styles.input, !emailIsValid && email.length > 0 ? styles.inputError : null]}
-    //       placeholder="Enter your email"
-    //       value={email}
-    //       onChangeText={setEmail}
-    //       keyboardType="email-address"
-    //       autoCapitalize="none"
-    //       accessibilityLabel="email"
-    //     />
-    //     {!emailIsValid && email.length > 0 ? (
-    //       <Text style={styles.errorText}>Please enter a valid email address.</Text>
-    //     ) : null}
-    //   </View>
-
-    //   <View style={styles.footer}>
-    //     <Pressable
-    //       style={({ pressed }) => [
-    //         styles.button,
-    //         !formIsValid ? styles.buttonDisabled : null,
-    //         pressed ? styles.buttonPressed : null,
-    //       ]}
-    //       disabled={!formIsValid}
-    //       onPress={() => {
-    //         // intentionally no action for now
-    //       }}
-    //     >
-    //       <Text style={[styles.buttonText, !formIsValid ? styles.buttonTextDisabled : null]}>Next</Text>
-    //     </Pressable>
-    //   </View>
-    // </View>
   );
 };
 
@@ -123,33 +78,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1, // take full screen height
   },
-  header: {
-    flex: 1, // 1 part of the screen
-    backgroundColor: '#2196F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   content: {
     flex: 3, // 3 parts of the screen (main section)
-    backgroundColor: '#E3F2FD',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(167, 183, 194, 1)',
     alignItems: 'center',
   },
-  footer: {
-    flex: 1, // 1 part of the screen
-    backgroundColor: '#1976D2',
-    justifyContent: 'center',
-    alignItems: 'center',
+  title: {
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginTop: '20%',
+    marginBottom: '50%',
+    color: '#333',
   },
-  headerText: {
-    color: '#fff',
-    fontSize: 20,
+    label: {
+    fontSize: 24,
+    fontWeight: '500',
+    marginBottom: 5,
+    color: '#333',
   },
-  contentText: {
-    fontSize: 18,
-  },
-  footerText: {
-    color: '#fff',
-    fontSize: 16,
+  inputError: {
+    borderColor: 'red',
   },
 });

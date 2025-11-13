@@ -4,7 +4,7 @@ import TextInput from '../components/Forms/TextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
 
-const Onboarding = () => {
+const OnboardingScreen = ({ navigation, route }) => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -25,6 +25,13 @@ const Onboarding = () => {
 
     setFormIsValid(nameValid && emailValid);
   }, [firstName, email]);
+
+  // If the screen was opened with params (e.g. for editing), prefill the inputs.
+  useEffect(() => {
+    const params = route?.params || {};
+    if (params.firstName && !firstName) setFirstName(params.firstName);
+    if (params.email && !email) setEmail(params.email);
+  }, [route?.params]);
 
 
   return (
@@ -66,12 +73,19 @@ const Onboarding = () => {
           ) : null}
         </View>
 
-      <Footer formIsValid={formIsValid}/>
+      <Footer
+        formIsValid={formIsValid}
+        onPress={() => 
+    
+          
+          navigation.navigate('Profile', { firstName, email })
+        }
+      />
     </View>
   );
 };
 
-export default Onboarding;
+export default OnboardingScreen;
 
 
 const styles = StyleSheet.create({

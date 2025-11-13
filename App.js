@@ -1,21 +1,45 @@
 import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import Onboarding from './screens/Onboarding';
 
-const Stack = createStackNavigator();
+import SplashScreen from './screens/SplashScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppNavigator from './navigation/AppNavigator';
 
 export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator>
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(false);
 
-        <Stack.Screen 
-          name="Onboarding" 
-          component={Onboarding} 
-          options={{ headerShown: false }} 
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+  // Load onboarding state from AsyncStorage
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboardingCompleted');
+        setIsOnboardingCompleted(completed === 'true');
+      } catch (e) {
+        console.log('Error reading onboarding data:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Simulate saving onboarding completion
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem('onboardingCompleted', 'true');
+    setIsOnboardingCompleted(true);
+  };
+
+  if (isLoading) {
+    // Show splash while reading from AsyncStorage
+    return <SplashScreen />;
+  }
+
+  return (
+    <AppNavigator
+      isOnboardingCompleted={isOnboardingCompleted}
+      onCompleteOnboarding={completeOnboarding}
+    />
   );
 }
+

@@ -1,6 +1,6 @@
 import { StyleSheet, View,Pressable, Text } from 'react-native';
 
-const Footer = ({ formIsValid = false, onPress = () => {console.log("Footer pressed")} }) => {
+const Footer = ({ formIsValid = false, onPress }) => {
   
   return (
 

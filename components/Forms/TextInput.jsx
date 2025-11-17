@@ -6,14 +6,14 @@ const TextInput = ({
   onChangeText,
   keyboardType = 'default',
   autoCapitalize = 'sentences',
-  style,
+  styleInput,
   accessibilityLabel,
   ...rest
 }) => {
   return (
     <View style={styles.wrapper}>
       <RNTextInput
-        style={[styles.input, style]}
+        style={styleInput}
         placeholder={placeholder}
         value={value}
         onChangeText={onChangeText}
@@ -30,14 +30,7 @@ export default TextInput;
 
 const styles = StyleSheet.create({
 
-  input: {
-    height: 50,
-    minWidth: 300,
-    borderWidth: 3,
-    borderColor: '#4F6770',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    
+  wrapper: {
+    width: '100%',
   },
 });

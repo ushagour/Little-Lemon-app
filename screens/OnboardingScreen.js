@@ -3,6 +3,7 @@ import {  StyleSheet, Text, View } from 'react-native';
 import TextInput from '../components/Forms/TextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
+import colors from '../config/colors';
 
 const OnboardingScreen = ({ navigation, route }) => {
   const [firstName, setFirstName] = useState('');
@@ -45,6 +46,7 @@ const OnboardingScreen = ({ navigation, route }) => {
 
     <View style={styles.content}>
         <Text style={styles.title}>Let us get to know you</Text>
+              <View style={{ width: '80%', alignItems: 'center' }}>
 
                 <Text style={styles.label}>First Name</Text>
           <TextInput
@@ -56,7 +58,6 @@ const OnboardingScreen = ({ navigation, route }) => {
           {!nameIsValid && firstName.length > 0 ? (
               <Text style={styles.errorText}>Please enter a valid name (letters and spaces only).</Text>
             ) : null}
-
 
 
                 <Text style={styles.label}>Email</Text>
@@ -71,6 +72,8 @@ const OnboardingScreen = ({ navigation, route }) => {
           {!emailIsValid && email.length > 0 ? (
             <Text style={styles.errorText}>Please enter a valid email address.</Text>
           ) : null}
+
+        </View>
         </View>
 
       <Footer
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 3, // 3 parts of the screen (main section)
-    backgroundColor: 'rgba(167, 183, 194, 1)',
+    backgroundColor: colors.secondary5,
     alignItems: 'center',
   },
   title: {
@@ -102,15 +105,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginTop: '20%',
     marginBottom: '50%',
-    color: '#333',
+    color: colors.textPrimary,
+  },
+    input: {
+    height: 50,
+    minWidth: 300,
+    borderWidth: 3,
+    borderColor: '#4F6770',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    
   },
     label: {
     fontSize: 24,
     fontWeight: '500',
     marginBottom: 5,
-    color: '#333',
+    color: colors.textPrimary,
   },
   inputError: {
-    borderColor: 'red',
+    borderColor: colors.danger,
   },
 });

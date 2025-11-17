@@ -1,22 +1,16 @@
-import { StyleSheet, View,Pressable, Text } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import AppButton from './Forms/AppButton';
 
 const Footer = ({ formIsValid = false, onPress }) => {
-  
   return (
-
     <View style={styles.footer}>
-      <Pressable
-
-        style={({ pressed }) => [
-          styles.button,
-          !formIsValid && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        disabled={!formIsValid}
+      <AppButton
+        title="Next"
         onPress={onPress}
-      >
-        <Text style={styles.buttonText}>Next</Text>
-      </Pressable>
+        disabled={!formIsValid}
+        buttonStyle={[styles.button, !formIsValid && styles.buttonDisabled]}
+        textStyle={styles.buttonText}
+      />
     </View>
   );
 };

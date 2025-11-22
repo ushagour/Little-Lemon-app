@@ -25,6 +25,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
   boxChecked: { backgroundColor: '#2E86AB', borderColor: '#2E86AB' },
-  check: { color: '#fff', fontSize: 14, lineHeight: 14 },
+  check: { fontSize: 14, lineHeight: 14 },
   label: { fontSize: 16, color: '#333' },
 });

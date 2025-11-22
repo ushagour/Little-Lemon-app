@@ -12,6 +12,7 @@ function AppButton({ title, children, onPress, color = "primary1", buttonStyle, 
         { backgroundColor: colors[color] },
         pressed && !disabled ? styles.buttonPressed : null,
         disabled ? styles.buttonDisabled : null,
+        styles.button,
       ]}
       onPress={onPress}
     >
@@ -26,10 +27,16 @@ function AppButton({ title, children, onPress, color = "primary1", buttonStyle, 
 
 const styles = StyleSheet.create({
   text: {
-    color: colors.white,
+    color: colors.black,
     fontSize: 18,
     textTransform: "uppercase",
-    fontWeight: "bold",
+  },
+   button: {
+    marginTop: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   buttonPressed: {
     opacity: 0.85,

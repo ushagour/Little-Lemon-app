@@ -11,7 +11,7 @@ const TextInput = ({
   ...rest
 }) => {
   return (
-    <View style={styles.wrapper}>
+    
       <RNTextInput
         style={styleInput}
         placeholder={placeholder}
@@ -22,15 +22,9 @@ const TextInput = ({
         accessibilityLabel={accessibilityLabel}
         {...rest}
       />
-    </View>
+  
   );
 };
 
 export default TextInput;
 
-const styles = StyleSheet.create({
-
-  wrapper: {
-    width: '100%',
-  },
-});

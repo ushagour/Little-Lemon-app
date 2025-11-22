@@ -32,9 +32,11 @@ function WelcomeScreen({navigation}) {
 
   return (
     <ImageBackground
-      blurRadius={10}
+      blurRadius={15}   // 👈 adjust blur level
       style={styles.background}
       source={require("../assets/chair.jpg")}
+    
+
     >
       <View style={styles.logoContainer}>
         <Text style={styles.tagline}>Sell What You Don't Need !</Text>

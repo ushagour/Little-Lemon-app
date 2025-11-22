@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, Pressable,ImageBackground } from 'react-native';
+import { View, Text, Image, StyleSheet, SafeAreaView, ImageBackground } from 'react-native';
 
 const SplashScreen = ({ onGetStarted = () => {} }) => {
   return (
    <ImageBackground
-        blurRadius={10}
+        blurRadius={15}   // 👈 adjust blur level
         style={styles.background}
         source={require("../assets/images/Lemon dessert.png")}
       >

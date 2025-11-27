@@ -48,7 +48,7 @@ export default Header;
 
 const styles = StyleSheet.create({
   header: {
-    height: 64,
+    height: 80,
     backgroundColor: '#EDEFEE',
     flexDirection: 'row',
     alignItems: 'center',
@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     width: 64,
     alignItems: 'flex-start',
     justifyContent: 'center',
+  
   },
   center: {
     flex: 1,
@@ -72,10 +73,11 @@ const styles = StyleSheet.create({
   sideButton: {
     padding: 8,
     borderRadius: 6,
+    backgroundColor: 'transparent',
   },
   sideButtonText: {
-    fontSize: 24,
     color: '#333',
+    
   },
   sidePlaceholder: {
     width: 40,

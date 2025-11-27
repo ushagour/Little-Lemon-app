@@ -23,21 +23,21 @@ A small React Native demo app for a restaurant-style onboarding and profile flow
 
 Logo / Splash
 
-![Logo](./assets/images/Logo.png)
+![Logo](./screen/images/Logo.png)
 
 Hero / Home (example)
 
-![Hero](./assets/images/Hero image.png)
+![Hero](./screenshots/Hero image.png)
 
 Profile (avatar & edit)
 
-![Profile](./assets/images/Profile.png)
+![Profile](./screenshots/Profile.png)
 
 Food / content examples
 
-![Greek Salad](./assets/images/Greek salad.png)
+![Greek Salad](./screenshots/Greek salad.png)
 
-![Pasta](./assets/images/Pasta.png)
+![Pasta](./screenshots/Pasta.png)
 
 ## Running
 

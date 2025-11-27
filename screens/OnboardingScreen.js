@@ -81,7 +81,8 @@ const OnboardingScreen = ({ navigation, route }) => {
         onPress={() => 
     
           
-          navigation.navigate('Profile', { firstName, email })
+          // navigation.navigate('Profile', { firstName, email })
+          navigation.navigate('Home')
         }
       />
     </View>

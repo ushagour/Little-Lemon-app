@@ -39,6 +39,7 @@ export default function App() {
     <AppNavigator
       isOnboardingCompleted={isOnboardingCompleted}
       onCompleteOnboarding={completeOnboarding}
+      state={true}
     />
   );
 }

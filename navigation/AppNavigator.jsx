@@ -17,8 +17,8 @@ export default function AppNavigator({...props}) {
     <NavigationContainer>
       <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
         {/* register all screens so navigation.navigate('Profile') always works */}
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>

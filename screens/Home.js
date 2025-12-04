@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,56 +13,89 @@ import {
 import Header from '../components/Header';
 import colors from '../config/colors';
 
-const MENU = [
-  {
-    id: '1',
-    title: 'Greek Salad',
-    category: 'Starters',
-    price: '$12',
-    image: require('../assets/images/Greek salad.png'),
-    description: 'Crisp romaine, tomatoes, cucumbers, feta and olives dressed with extra virgin olive oil.',
-  },
-  {
-    id: '2',
-    title: 'Pasta',
-    category: 'Mains',
-    price: '$14',
-    image: require('../assets/images/Pasta.png'),
-    description: 'House-made pasta tossed in a rich tomato and basil sauce with parmesan.',
-  },
-  {
-    id: '3',
-    title: 'Grilled Fish',
-    category: 'Mains',
-    price: '$18',
-    image: require('../assets/images/Grilled fish.png'),
-    description: 'Seasonal fish, grilled and finished with lemon, herbs and olive oil.',
-  },
-  {
-    id: '4',
-    title: 'Lemon Dessert',
-    category: 'Desserts',
-    price: '$8',
-    image: require('../assets/images/Lemon dessert.png'),
-    description: 'Light lemon tart served with whipped cream and a drizzle of honey.',
-  },
-  {
-    id: '5',
-    title: 'Bruschetta',
-    category: 'Starters',
-    price: '$9',
-    image: require('../assets/images/Bruschetta.png'),
-    description: 'Toasted baguette topped with fresh tomatoes, garlic, basil and olive oil.',
-  },
-];
+import {useSQLiteContext} from 'expo-sqlite';
+import { getAllItems } from '../database/queries';
 
-const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts'];
 
-const Home = ({ navigation }) => {
+
+function Home({ navigation }) {
+  const db = useSQLiteContext();
   const [query, setQuery] = useState('');
+  const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [menuData, setMenuData] = useState([]);
+  const [loadedFrom, setLoadedFrom] = useState("API");
+  const [version, setVersion] = useState('');
 
-  const filtered = MENU.filter((m) => {
+
+  useEffect(() => {
+    // Fetch remote menu JSON once on mount
+    const fetchMenu = async () => {
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/menu.json'
+        );
+        const data = await res.json();
+        // API returns an object with `menu` array; fallback to data itself if array
+        const items = Array.isArray(data) ? data : data.menu || [];
+
+        // Map API fields to UI fields used in this screen
+        const mapped = items.map((it, idx) => ({
+          id: it.id ? String(it.id) : String(idx + 1),
+          title: it.name || it.title || 'Untitled',
+          description: it.description || '',
+          price: it.price ? `$${it.price}` : it.price_display || '$0.00',
+          category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+
+
+          // Use a local placeholder image; replace with mapping if you add image assets matching API names
+          image: require('../assets/images/placeholder.png'),
+        }));
+
+        setMenuData(mapped);
+      } catch (e) {
+
+        fetchFromDB();
+   
+      }
+    };
+
+    fetchMenu();
+  }, [db]);
+
+
+
+    const fetchFromDB  =  async () => {
+
+const items = await getAllItems(db);
+
+
+        // Map API fields to UI fields used in this screen
+        const mapped = items.map((it, idx) => ({
+          id: it.id ? String(it.id) : String(idx + 1),
+          title: it.name || it.title || 'Untitled',
+          description: it.description || '',
+          price: it.price ? `$${it.price}` : it.price_display || '$0.00',
+          category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+
+
+          // Use a local placeholder image; replace with mapping if you add image assets matching API names
+          image: require('../assets/images/placeholder.png'),
+        }));
+        console.log(mapped.length);
+        
+
+        setMenuData(mapped);
+ }
+
+
+
+
+
+
+
+
+
+  const filtered = menuData.filter((m) => {
     const matchesQuery = m.title.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = selectedCategory === 'All' ? true : m.category === selectedCategory;
     return matchesQuery && matchesCategory;
@@ -84,14 +117,16 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header  onLeftPress={ () =>  navigation.goBack()} 
-      rightContent={<Image source={require('../assets/images/Profile.png')}
-       style={{ width: 24, height: 24 }} />}
-       onRightPress={()=>{navigation.navigate('Profile')}}
-       />
 
-    
-  <View style={styles.banner}>
+      <Header
+        onLeftPress={() => navigation.goBack()}
+        rightContent={<Image source={require('../assets/images/Profile.png')} style={{ width: 24, height: 24 }} />}
+        onRightPress={() => {
+          navigation.navigate('Profile');
+        }}
+      />
+
+      <View style={styles.banner}>
         <View style={styles.bannerOverlay} />
         <View style={styles.bannerContent}>
           <View style={styles.bannerText}>
@@ -112,6 +147,8 @@ const Home = ({ navigation }) => {
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>Menu</Text>
         <Text style={styles.sectionSub}>Popular dishes</Text>
+           <Text style={styles.sectionSub}>SQLite version: {version}</Text>
+
       </View>
 
       <View style={styles.categoryWrap}>
@@ -128,12 +165,7 @@ const Home = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(i) => i.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-      />
+      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} contentContainerStyle={styles.list} />
     </View>
   );
 };

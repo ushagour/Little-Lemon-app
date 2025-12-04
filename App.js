@@ -3,10 +3,11 @@ import * as React from 'react';
 import SplashScreen from './screens/SplashScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './navigation/AppNavigator';
+import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 
 export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(false);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(true);
 
   // Load onboarding state from AsyncStorage
   React.useEffect(() => {
@@ -36,11 +37,17 @@ export default function App() {
   }
 
   return (
+    <SQLiteProvider
+      databaseName="little_lemon.db"
+      // useSuspense={false}
+    >
+
     <AppNavigator
-      isOnboardingCompleted={isOnboardingCompleted}
+      isOnboardingCompleted={true }
       onCompleteOnboarding={completeOnboarding}
       state={true}
     />
+        </SQLiteProvider>
+
   );
 }
-

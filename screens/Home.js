@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import Header from '../components/Header';
 import colors from '../config/colors';
-import { useSQLiteContext } from 'expo-sqlite';
-import { createMenuItem } from '../database/queries';
+
+import {useSQLiteContext} from 'expo-sqlite';
+import { getAllItems } from '../database/queries';
 
 
 
@@ -23,14 +24,15 @@ function Home({ navigation }) {
   const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
+  const [loadedFrom, setLoadedFrom] = useState("API");
+  const [version, setVersion] = useState('');
 
 
   useEffect(() => {
     // Fetch remote menu JSON once on mount
     const fetchMenu = async () => {
       try {
-        const res = await fetch(
-          'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json'
+        const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/menu.json'
         );
         const data = await res.json();
         // API returns an object with `menu` array; fallback to data itself if array
@@ -50,13 +52,40 @@ function Home({ navigation }) {
         }));
 
         setMenuData(mapped);
-      } catch (error) {
-        console.error('Error fetching menu data:', error);
+      } catch (e) {
+
+        fetchFromDB();
+   
       }
     };
 
     fetchMenu();
   }, [db]);
+
+
+
+    const fetchFromDB  =  async () => {
+
+const items = await getAllItems(db);
+
+
+        // Map API fields to UI fields used in this screen
+        const mapped = items.map((it, idx) => ({
+          id: it.id ? String(it.id) : String(idx + 1),
+          title: it.name || it.title || 'Untitled',
+          description: it.description || '',
+          price: it.price ? `$${it.price}` : it.price_display || '$0.00',
+          category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+
+
+          // Use a local placeholder image; replace with mapping if you add image assets matching API names
+          image: require('../assets/images/placeholder.png'),
+        }));
+        console.log(mapped.length);
+        
+
+        setMenuData(mapped);
+ }
 
 
 
@@ -118,6 +147,8 @@ function Home({ navigation }) {
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>Menu</Text>
         <Text style={styles.sectionSub}>Popular dishes</Text>
+           <Text style={styles.sectionSub}>SQLite version: {version}</Text>
+
       </View>
 
       <View style={styles.categoryWrap}>

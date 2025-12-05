@@ -15,6 +15,8 @@ import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems } from '../database/queries';
+import { fetchMenu } from '../api/fetchMenu';
+import { getImageUrl } from '../api/getImageUrl';
 
 
 
@@ -25,48 +27,34 @@ function Home({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
   const [loadedFrom, setLoadedFrom] = useState("API");
-  const [version, setVersion] = useState('');
 
 
   useEffect(() => {
     // Fetch remote menu JSON once on mount
-    const fetchMenu = async () => {
       try {
-        const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/menu.json'
-        );
-        const data = await res.json();
-        // API returns an object with `menu` array; fallback to data itself if array
-        const items = Array.isArray(data) ? data : data.menu || [];
+       fetchMenu().then((data)=>{  
+          if(data && data.length>0){
+            setMenuData(data);
+            setLoadedFrom("API");
 
-        // Map API fields to UI fields used in this screen
-        const mapped = items.map((it, idx) => ({
-          id: it.id ? String(it.id) : String(idx + 1),
-          title: it.name || it.title || 'Untitled',
-          description: it.description || '',
-          price: it.price ? `$${it.price}` : it.price_display || '$0.00',
-          category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+          }
+          else{
+            fetchFromDB();
+            setLoadedFrom("SQLite DB");
+          }
 
-
-          // Use a local placeholder image; replace with mapping if you add image assets matching API names
-          image: require('../assets/images/placeholder.png'),
-        }));
-
-        setMenuData(mapped);
+        });
       } catch (e) {
-
-        fetchFromDB();
-   
-      }
-    };
-
-    fetchMenu();
+        console.log('Error fetching menu from API:', e);
+          } 
+    
   }, [db]);
 
 
 
     const fetchFromDB  =  async () => {
 
-const items = await getAllItems(db);
+            const items = await getAllItems(db);
 
 
         // Map API fields to UI fields used in this screen
@@ -76,23 +64,14 @@ const items = await getAllItems(db);
           description: it.description || '',
           price: it.price ? `$${it.price}` : it.price_display || '$0.00',
           category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-
-
-          // Use a local placeholder image; replace with mapping if you add image assets matching API names
-          image: require('../assets/images/placeholder.png'),
+        // Use a local placeholder image; replace with mapping if you add image assets matching API names
+          image: getImageUrl(it.image) || require('../assets/images/placeholder.png'),
         }));
-        console.log(mapped.length);
+
         
 
         setMenuData(mapped);
  }
-
-
-
-
-
-
-
 
 
   const filtered = menuData.filter((m) => {
@@ -103,7 +82,7 @@ const items = await getAllItems(db);
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={item.image} style={styles.cardImage} />
+      <Image source={{ uri: item.image }  } style={styles.cardImage} />
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <Text style={styles.cardDescription} numberOfLines={1} ellipsizeMode="tail">{item.description}</Text>
@@ -147,7 +126,7 @@ const items = await getAllItems(db);
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>Menu</Text>
         <Text style={styles.sectionSub}>Popular dishes</Text>
-           <Text style={styles.sectionSub}>SQLite version: {version}</Text>
+           <Text style={styles.sectionSub}>source : {loadedFrom}</Text>
 
       </View>
 

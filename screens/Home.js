@@ -14,9 +14,10 @@ import Header from '../components/Header';
 import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
-import { getAllItems } from '../database/queries';
-import { fetchMenu } from '../api/fetchMenu';
+import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,clearMenuTable } from '../database/queries';
+import { fetchMenuAPI } from '../api/fetchMenuAPI';
 import { getImageUrl } from '../api/getImageUrl';
+import AppButton from '../components/Forms/AppButton';
 
 
 
@@ -26,56 +27,57 @@ function Home({ navigation }) {
   const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
-  const [loadedFrom, setLoadedFrom] = useState("API");
+  const [loadedFrom, setLoadedFrom] = useState("");
 
 
   useEffect(() => {
-    // Fetch remote menu JSON once on mount
+
+    const init = async () => {
+      if (!db) {
+        // no sqlite available -> fallback to fetch
+        await loadFromRemoteAndSetState();
+        
+        return;
+      }
+
       try {
-       fetchMenu().then((data)=>{  
-          if(data && data.length>0){
-            setMenuData(data);
-            setLoadedFrom("API");
+        // 1) make sure table exists
+        await ensureMenuTable(db);
 
-          }
-          else{
-            fetchFromDB();
-            setLoadedFrom("SQLite DB");
-          }
+        // 2) check existing rows
+        const rows = await getAllItems(db); // returns [] if empty
+        if (rows && rows.length > 0) {
+          setMenuData(rows.map(mapRowToUI));
+          return;
+        }
 
-        });
+        // 3) empty DB -> fetch remote, insert all, then load from DB
+        const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json');
+        const json = await res.json();
+        const items = Array.isArray(json) ? json : json.menu || [];
+
+        // insert into DB (insertMenuIntoSQLite expects array or single)
+        await insertMenuIntoSQLite(db, items);
+
+        // re-read from DB and set state
+        const loaded = await getAllItems(db);
+        
+        setMenuData(loaded.map(mapRowToUI));
+        setLoadedFrom("SQLite DB");
       } catch (e) {
-        console.log('Error fetching menu from API:', e);
-          } 
-    
+        console.error('Init DB/fetch error', e);
+        // fallback to remote fetch if DB flow failed
+        await loadFromRemoteAndSetState();
+      }
+    };
+
+    init();
   }, [db]);
 
 
-
-    const fetchFromDB  =  async () => {
-
-            const items = await getAllItems(db);
-
-
-        // Map API fields to UI fields used in this screen
-        const mapped = items.map((it, idx) => ({
-          id: it.id ? String(it.id) : String(idx + 1),
-          title: it.name || it.title || 'Untitled',
-          description: it.description || '',
-          price: it.price ? `$${it.price}` : it.price_display || '$0.00',
-          category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-        // Use a local placeholder image; replace with mapping if you add image assets matching API names
-          image: getImageUrl(it.image) || require('../assets/images/placeholder.png'),
-        }));
-
-        
-
-        setMenuData(mapped);
- }
-
-
+  
   const filtered = menuData.filter((m) => {
-    const matchesQuery = m.title.toLowerCase().includes(query.toLowerCase());
+    const matchesQuery = m.name.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = selectedCategory === 'All' ? true : m.category === selectedCategory;
     return matchesQuery && matchesCategory;
   });
@@ -84,8 +86,8 @@ function Home({ navigation }) {
     <View style={styles.card}>
       <Image source={{ uri: item.image }  } style={styles.cardImage} />
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDescription} numberOfLines={1} ellipsizeMode="tail">{item.description}</Text>
+        <Text style={styles.cardTitle}>{item.name}</Text>
+        <Text style={styles.cardDescription} numberOfLines={2} ellipsizeMode="tail">{item.description}</Text>
         <Text style={styles.cardPrice}>{item.price}</Text>
       </View>
       <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('Profile')}>
@@ -127,6 +129,7 @@ function Home({ navigation }) {
         <Text style={styles.sectionTitle}>Menu</Text>
         <Text style={styles.sectionSub}>Popular dishes</Text>
            <Text style={styles.sectionSub}>source : {loadedFrom}</Text>
+          {/* <AppButton title="clearDB" onPress={async () => {clearMenuTable(db); setMenuData([]);}} /> */}
 
       </View>
 
@@ -242,3 +245,38 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: '#fff', fontWeight: '600' },
 });
+
+// Map a DB row to the UI shape expected by the list
+function mapRowToUI(r, idx = 0) {
+  return {
+    id: r.id ? String(r.id) : String(idx + 1),
+    name: r.name || 'Untitled',
+    description: r.description || '',
+    price: r.price ? `$${r.price}` : '$0.00',
+    category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+    image: getImageUrl(r.image) || require('../assets/images/placeholder.png'),
+  };
+}
+//this method fetches from remote api if there is no sql database available
+
+async function loadFromRemoteAndSetState() {
+  try {
+    const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json');
+    const json = await res.json();
+    const items = Array.isArray(json) ? json : json.menu || [];
+    const ui = items.map((it, idx) => ({
+      id: it.id ? String(it.id) : String(idx + 1),
+      title: it.name || it.title || 'Untitled',
+      description: it.description || '',
+      price: `$${(typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0)}`,
+        category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+    image: getImageUrl(it.image) || require('../assets/images/placeholder.png'),
+    }));
+    setMenuData(ui);
+    setLoadedFrom("Remote API");
+    
+  } catch (err) {
+    console.error('Remote load failed', err);
+  }
+}
+

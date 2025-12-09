@@ -18,12 +18,66 @@ A small React Native demo app for a restaurant-style onboarding and profile flow
 - Notification preferences (checkboxes)
 - Persistent profile saved to device using AsyncStorage
 - Reusable `AppButton` component for consistent buttons across screens
+- **SQLite Integration**: Menu data persisted locally for fast offline access
+- **Cold-start Optimization**: Loads from local DB on subsequent app launches, fetches remote API only when needed
+
+## Cold-Start Flow
+
+**First Launch (Fresh Install):**
+
+```text
+App Start
+  ↓
+SQLiteBootstrap (ensure DB table exists)
+  ↓
+Home Screen opens
+  ↓
+DB empty? Yes
+  ↓
+Fetch Remote API (menu.json)
+  ↓
+Insert rows into SQLite ← Background seeding
+  ↓
+Display UI from Remote Data (fast)
+  ↓
+Next cold start will load from DB
+```
+
+**Subsequent Launches (DB has data):**
+
+```text
+App Start
+  ↓
+SQLiteBootstrap (ensure DB table exists)
+  ↓
+Home Screen opens
+  ↓
+DB empty? No
+  ↓
+Load rows from SQLite (instant, no network)
+  ↓
+Display UI from Local Data
+  ↓
+User interaction (search, filter, order)
+```
+
+**If DB Fails:**
+
+```text
+Home Screen
+  ↓
+ensureMenuTable(db) fails / DB unavailable
+  ↓
+Fallback to Remote API fetch
+  ↓
+Display UI, retry DB seeding in background
+```
 
 ## Screenshots
 
 Logo / Splash
 
-![Logo](./screen/images/Logo.png)
+![Logo](./screenshots/splash.png)
 
 Hero / Home (example)
 

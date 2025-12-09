@@ -15,7 +15,6 @@ import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,clearMenuTable } from '../database/queries';
-import { fetchMenuAPI } from '../api/fetchMenuAPI';
 import { getImageUrl } from '../api/getImageUrl';
 import AppButton from '../components/Forms/AppButton';
 

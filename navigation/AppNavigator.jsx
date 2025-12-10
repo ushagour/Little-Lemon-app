@@ -9,16 +9,25 @@ import HomeScreen from '../screens/Home';
 
 const Stack = createStackNavigator();
 
-export default function AppNavigator({...props}) {
-  const isOnboardingCompleted = props?.isOnboardingCompleted || props?.state?.isOnboardingCompleted || false;
+export default function AppNavigator({ isOnboardingCompleted, onCompleteOnboarding }) {
+  // If onboarding not completed, start with Onboarding, otherwise Home
   const initialRoute = isOnboardingCompleted ? 'Home' : 'Onboarding';
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
-        {/* register all screens so navigation.navigate('Profile') always works */}
+      <Stack.Navigator 
+        initialRouteName={initialRoute} 
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Onboarding">
+          {(props) => (
+            <OnboardingScreen 
+              {...props} 
+              onComplete={onCompleteOnboarding} 
+            />
+          )}
+        </Stack.Screen>
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>

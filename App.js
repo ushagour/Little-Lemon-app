@@ -3,11 +3,16 @@ import * as React from 'react';
 import SplashScreen from './screens/SplashScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './navigation/AppNavigator';
-import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteProvider } from 'expo-sqlite';
+import {
+  SafeAreaView,
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
+
 
 export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(true);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(false);
 
   // Load onboarding state from AsyncStorage
   React.useEffect(() => {
@@ -33,21 +38,28 @@ export default function App() {
 
   if (isLoading) {
     // Show splash while reading from AsyncStorage
-    return <SplashScreen />;
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1 }}>
+          <SplashScreen />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
   }
 
   return (
-    <SQLiteProvider
-      databaseName="little_lemon.db"
-      // useSuspense={false}
-    >
-
-    <AppNavigator
-      isOnboardingCompleted={true }
-      onCompleteOnboarding={completeOnboarding}
-      state={true}
-    />
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <SQLiteProvider
+          databaseName="little_lemon.db"
+          // useSuspense={false}
+        >
+          <AppNavigator
+            isOnboardingCompleted={isOnboardingCompleted}
+            onCompleteOnboarding={completeOnboarding}
+          />
         </SQLiteProvider>
-
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

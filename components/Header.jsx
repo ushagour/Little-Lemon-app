@@ -10,7 +10,7 @@ import AppButton from './Forms/AppButton';
  * - rightContent: optional React node to render on the right (e.g. avatar)
  * - onRightPress: handler for right area
  */
-const Header = ({ onLeftPress = null, leftLabel = '‹', rightContent = null, onRightPress = null }) => {
+const Header = ({ onLeftPress = null, leftLabel = '', rightContent = null, onRightPress = null }) => {
   return (
     <View style={styles.header}>
       <View style={styles.side}>

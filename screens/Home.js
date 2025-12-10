@@ -17,6 +17,8 @@ import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
 import { getImageUrl } from '../api/getImageUrl';
 import AppButton from '../components/Forms/AppButton';
+import AvatarObject from '../components/ui/AvatarObject';
+import { Ionicons } from '@expo/vector-icons';
 
 
 
@@ -64,6 +66,7 @@ function Home({ navigation }) {
         const rows = await getAllItems(db); // returns [] if empty
         if (rows && rows.length > 0) {
           setMenuData(rows.map(mapRowToUI));
+                  setLoadedFrom("SQLite DB");
           return;
         }
 
@@ -138,7 +141,9 @@ function Home({ navigation }) {
 
       <Header
         onLeftPress={() => navigation.goBack()}
-        rightContent={<Image source={require('../assets/images/Profile.png')} style={{ width: 24, height: 24 }} />}
+        leftLabel={<Ionicons name="arrow-back" size={24} color="#fff" />}
+        rightContent={<Ionicons name="person-circle" size={24} color="#fff" />}
+
         onRightPress={() => {
           navigation.navigate('Profile');
         }}

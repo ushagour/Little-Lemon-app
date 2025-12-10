@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
@@ -6,6 +7,7 @@ import colors from '../config/colors';
 import AppCheckbox from '../components/Forms/AppCheckbox';
 import { MaskedTextInput } from "react-native-mask-text";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AvatarObject from '../components/ui/AvatarObject';
 
 
 const ProfileScreen = ({ route, navigation }) => {
@@ -82,19 +84,22 @@ const ProfileScreen = ({ route, navigation }) => {
         onPress={() => navigation.goBack()}
         style={styles.backButton}
       >
-        <Text  style={styles.backButtonText}>back</Text>
+      <Ionicons name="arrow-back" size={24} color="#fff" />
       </TouchableOpacity>
 
-        <Image source={avatarUri? avatarUri : initials} style={styles.logo} resizeMode="contain" />
+
 
 
 
       <TouchableOpacity>
-        <Image
-          source={require('../assets/images/Profile.png')}   
-          style={styles.profileIcon}
-          resizeMode="contain"
-        />
+
+
+
+<AvatarObject avatarUri={avatarUri} initials={initials} />
+
+   
+
+
       </TouchableOpacity>
       </View>
 
@@ -135,7 +140,7 @@ const ProfileScreen = ({ route, navigation }) => {
                   .then(() => {
                     navigation.reset({
                       index: 0,
-                      routes: [{ name: 'Splash' }],
+                      routes: [{ name: 'Onboarding' }],
                     });
                   })
                   .catch((e) => {
@@ -293,28 +298,22 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '600',    
   },
-  profileIcon: {
-    width: 40,
-    height: 40, 
-        borderRadius: 20,
-  }, 
-  logo: { 
-    width: 150,
-    height: 50,
+ avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D9EAF6',
+  },
+  avatarInitials: {
+    color: colors.primary1,
+    fontSize: 28,
+    fontWeight: '700',
+  },
 
-  },
-  ProfileWrapper: {
-    backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 10,
-    // shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    // elevation for Android
-    elevation: 4,
-  },
   ProfileWrapperTitle: {
     fontSize: 24,
     fontStyle:'bold',
@@ -322,6 +321,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: colors.textPrimary,
   },
+    title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
+  },
+
   avatar: {
     width: 80,
     height: 80,
@@ -339,15 +344,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#D9EAF6',
   },
-  avatarInitials: {
-    color: colors.primary1,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 20,
+   ProfileWrapper: {
+    backgroundColor: colors.white,
+    padding: 16,
+    borderRadius: 10,
+    // shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    // elevation for Android
+    elevation: 4,
   },
   titleSmall: {
     fontSize: 12,

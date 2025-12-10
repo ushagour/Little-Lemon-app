@@ -53,3 +53,20 @@ export const ensureMenuTable = async (db) => {
 export const clearMenuTable = async (db) => {
   await db.runAsync(`DELETE FROM menu`);
 };
+
+
+//filter items by category
+export const getItemsByCategory = async (db, category) => {
+  return await db.getAllAsync("SELECT * FROM menu WHERE category = ?", [category]);//nb:it doesnt works like and statement 
+};
+
+
+
+// search items by text: matches name OR category
+export const searchItemsByText = async (db, query) => {
+  const likeQuery = `%${query}%`;
+  return await db.getAllAsync(
+    "SELECT * FROM menu WHERE name LIKE ? OR category LIKE ?",
+    [likeQuery, likeQuery]
+  );
+};

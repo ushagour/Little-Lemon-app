@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,15 +14,32 @@ import Header from '../components/Header';
 import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
-import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,clearMenuTable } from '../database/queries';
+import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
 import { getImageUrl } from '../api/getImageUrl';
 import AppButton from '../components/Forms/AppButton';
 
 
 
+// Custom hook: debounce a value with a delay (in ms)
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    timerRef.current = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timerRef.current);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 function Home({ navigation }) {
   const db = useSQLiteContext();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
   const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
@@ -74,11 +91,32 @@ function Home({ navigation }) {
   }, [db]);
 
 
-  
+  // Effect: run search when debouncedQuery changes (after 500ms pause)
+  useEffect(() => {
+    if (debouncedQuery.trim() === '') {
+      // if query is empty, reload all items
+      getAllItems(db).then((rows) => {
+        if (rows && rows.length > 0) {
+          setMenuData(rows.map(mapRowToUI));
+        }
+      }).catch(err => console.error('Reload all items error', err));
+      return;
+    }
+
+    // search by name in DB
+    searchItemsByText(db, debouncedQuery).then((results) => {
+      const uiResults = results.map(mapRowToUI);
+      setMenuData(uiResults);
+    }).catch((err) => {
+      console.error('Search error', err);
+    });
+  }, [debouncedQuery, db]);
+
+
+  // Filter by category only (search/debounce already applied to menuData)
   const filtered = menuData.filter((m) => {
-    const matchesQuery = m.name.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = selectedCategory === 'All' ? true : m.category === selectedCategory;
-    return matchesQuery && matchesCategory;
+    return matchesCategory;
   });
 
   const renderItem = ({ item }) => (

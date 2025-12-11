@@ -4,7 +4,7 @@ import { Image } from 'react-native';
 import colors from '../../config/colors';
 
 
-const AvatarObject = ({avatarUri,initials}) => {
+const Avatar = ({avatarUri,initials}) => {
   return (
     <>
         { avatarUri ? (
@@ -22,7 +22,7 @@ const AvatarObject = ({avatarUri,initials}) => {
   )
 }
 
-export default AvatarObject
+export default Avatar
 
 const styles = StyleSheet.create({
 

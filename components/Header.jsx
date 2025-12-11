@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, StyleSheet, View, Text } from 'react-native';
 import AppButton from './Forms/AppButton';
+import colors from '../config/colors';
 
 /**
  * Header with three columns: left button, centered logo, right profile/content.
@@ -10,21 +11,19 @@ import AppButton from './Forms/AppButton';
  * - rightContent: optional React node to render on the right (e.g. avatar)
  * - onRightPress: handler for right area
  */
-const Header = ({ onLeftPress = null, leftLabel = '', rightContent = null, onRightPress = null }) => {
+const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, onRightPress = null }) => {
   return (
     <View style={styles.header}>
       <View style={styles.side}>
-        {onLeftPress ? (
-          <AppButton
-            title={leftLabel}
-            onPress={onLeftPress}
-            buttonStyle={styles.sideButton}
-            textStyle={styles.sideButtonText}
-          />
+   
+     {leftContent ? (
+          <AppButton onPress={onLeftPress} buttonStyle={styles.sideButton}>
+            {leftContent}
+          </AppButton>
         ) : (
-          // keep space so center stays centered
           <View style={styles.sidePlaceholder} />
         )}
+        
       </View>
 
       <View style={styles.center} pointerEvents="none">
@@ -48,12 +47,13 @@ export default Header;
 
 const styles = StyleSheet.create({
   header: {
-    height: 80,
-    backgroundColor: '#EDEFEE',
+    height: 70,
+    backgroundColor: colors.secondary4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
+    marginBottom: 10,
   },
   side: {
     width: 64,
@@ -70,11 +70,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 50,
   },
-  sideButton: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: 'transparent',
-  },
+
   sideButtonText: {
     color: '#333',
     

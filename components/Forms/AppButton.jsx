@@ -28,7 +28,7 @@ function AppButton({ title, children, onPress, color = "primary1", buttonStyle, 
 const styles = StyleSheet.create({
   text: {
     color: colors.black,
-    fontSize: 18,
+    fontSize: 14,
     textTransform: "uppercase",
   },
    button: {

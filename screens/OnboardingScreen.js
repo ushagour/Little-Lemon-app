@@ -140,4 +140,9 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: colors.danger,
   },
+  errorText: {  
+    color: colors.danger,
+    marginTop: 5,
+    marginBottom: 15,
+  },
 });

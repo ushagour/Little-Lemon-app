@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
@@ -16,7 +16,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   // Initialize with empty strings, will load from AsyncStorage
   const [editFirstName, setEditFirstName] = useState('');
-  const [familyName, setFamilyName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   // phoneMasked holds the formatted string shown in the input (e.g. +1 (555) 555-5555)
   // phoneRaw holds digits only (e.g. 5555555555)
@@ -25,32 +25,8 @@ const ProfileScreen = ({ route, navigation }) => {
 
 
 
-  // load saved profile from AsyncStorage on mount
+  // Call loadProfile once on mount
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const json = await AsyncStorage.getItem(PROFILE_KEY);
-        if (json) {
-          const data = JSON.parse(json);
-          console.log('Loaded profile from AsyncStorage:', data);
-          if (data.firstName) setEditFirstName(data.firstName);
-          if (data.familyName) setFamilyName(data.familyName);
-          if (data.email) setEditEmail(data.email);
-          if (data.phone) {
-            setPhoneMasked(data.phone);
-            setPhoneRaw((data.phone || '').replace(/\D/g, ''));
-          }
-          if (typeof data.prefOrderStatus === 'boolean') setPrefOrderStatus(data.prefOrderStatus);
-          if (typeof data.prefPasswordChanges === 'boolean') setPrefPasswordChanges(data.prefPasswordChanges);
-          if (typeof data.prefSpecialOffers === 'boolean') setPrefSpecialOffers(data.prefSpecialOffers);
-          if (typeof data.prefNewsletter === 'boolean') setPrefNewsletter(data.prefNewsletter);
-        } else {
-          console.log('No profile found in AsyncStorage');
-        }
-      } catch (e) {
-        console.log('Failed to load profile from storage', e);
-      }
-    };
     loadProfile();
   }, []);
 
@@ -74,7 +50,7 @@ const ProfileScreen = ({ route, navigation }) => {
               const profile = {
                 firstName: editFirstName,
                 email: editEmail,
-                familyName: familyName,
+                lastName: lastName,
                 phone: phoneMasked,
                 prefOrderStatus,
                 prefPasswordChanges,
@@ -82,7 +58,6 @@ const ProfileScreen = ({ route, navigation }) => {
                 prefNewsletter,
               };
               try {
-                console.log(profile);
                 
                 await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
               } catch (e) {
@@ -109,13 +84,41 @@ const ProfileScreen = ({ route, navigation }) => {
 
   // derive avatar URI (if uploaded) and initials fallback
   const avatarUri = route?.params?.avatar || route?.params?.photo || null;
-  const initials = `${(editFirstName?.[0] || '').toUpperCase()}${(familyName?.[0] || '').toUpperCase()}`;
+  const initials = `${(editFirstName?.[0] || '').toUpperCase()}${(lastName?.[0] || '').toUpperCase()}`;
 
   // preference checkboxes
   const [prefOrderStatus, setPrefOrderStatus] = useState(false);
   const [prefPasswordChanges, setPrefPasswordChanges] = useState(false);
   const [prefSpecialOffers, setPrefSpecialOffers] = useState(false);
   const [prefNewsletter, setPrefNewsletter] = useState(false);
+
+  // Load profile from AsyncStorage
+  const loadProfile = async () => {
+    try {
+      const json = await AsyncStorage.getItem(PROFILE_KEY);
+      if (json) {
+        const data = JSON.parse(json);
+        // console.log('Loaded profile from AsyncStorage:', data);
+        if (data.firstName) setEditFirstName(data.firstName);
+        if (data.lastName) setLastName(data.lastName);
+        if (data.email) setEditEmail(data.email);
+        if (data.phone) {
+          setPhoneMasked(data.phone);
+          setPhoneRaw((data.phone || '').replace(/\D/g, ''));
+        }
+        if (typeof data.prefOrderStatus === 'boolean') setPrefOrderStatus(data.prefOrderStatus);
+        if (typeof data.prefPasswordChanges === 'boolean') setPrefPasswordChanges(data.prefPasswordChanges);
+        if (typeof data.prefSpecialOffers === 'boolean') setPrefSpecialOffers(data.prefSpecialOffers);
+        if (typeof data.prefNewsletter === 'boolean') setPrefNewsletter(data.prefNewsletter);
+      } else {
+        console.log('No profile found in AsyncStorage');
+      }
+    } catch (e) {
+      console.log('Failed to load profile from storage', e);
+    }
+  };
+
+  // Call loadProfile once on mount
 
 
 
@@ -142,7 +145,8 @@ const ProfileScreen = ({ route, navigation }) => {
       />
 
 
-  <View style={styles.ProfileWrapper}>   
+  <View style={styles.ProfileWrapper}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
           <Text style={styles.titleSmall}>Avatar</Text>
           <View style={styles.row}>
@@ -187,7 +191,7 @@ const ProfileScreen = ({ route, navigation }) => {
           </View>
 
           <View style={styles.inputRow}>
-                    <TextInput value={familyName} placeholder="Family Name" onChangeText={setFamilyName} styleInput={styles.input} />
+                    <TextInput value={lastName} placeholder="Last Name" onChangeText={setLastName} styleInput={styles.input} />
           </View>
 
           <View style={styles.inputRow}>
@@ -217,6 +221,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
           {!hasData && <Text style={styles.noData}>No profile data provided.</Text>}
 
+            </View>
 {/* //design for checkbox like figma */}
 
 <View style={styles.checkBoxContainer}>
@@ -266,28 +271,25 @@ const ProfileScreen = ({ route, navigation }) => {
              textStyle={styles.TextButtons}
 
             />
-  <View style={styles.footerWrapper}>
-    <AppButton
-      title="Discard Changes"
-      onPress={Discard}
-      color="white"
-      disabled={!phoneIsValid}
-      buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-    />
-    <AppButton
-      title="Save Changes"
-      onPress={save}
-      color="primary1"
-      disabled={!phoneIsValid}
-      buttonStyle={styles.saveButton}
-    />
-  </View>
-  
-   </View>
+          <View style={styles.footerWrapper}>
+            <AppButton
+              title="Discard Changes"
+              onPress={Discard}
+              color="white"
+              disabled={!phoneIsValid}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
+            />
+            <AppButton
+              title="Save Changes"
+              onPress={save}
+              color="primary1"
+              disabled={!phoneIsValid}
+              textStyle={[styles.TextButtons, { color: colors.white }]}
+            />
+          </View>
 
- </View>
-  
-
+    </ScrollView>
+    </View>
     </View>
   );
 };
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D9EAF6',
   },
   ProfileWrapper: {
-    flex: 1,
+    flex: 2,
     width: '100%',
     backgroundColor: colors.white,
     padding: 16,
@@ -368,8 +370,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     // elevation for Android
-    elevation: 4,
-    marginBottom: 20,
+    // elevation: 4,
+    // marginBottom: 20,
   },
   titleSmall: {
     fontSize: 12,
@@ -440,20 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
-  checkBox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#BFC9CC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  checkBoxChecked: {
-    backgroundColor: colors.primary1,
-    borderColor: colors.primary1,
-  },
+
   checkMark: {
     color: '#fff',
     fontSize: 14,
@@ -495,15 +484,18 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   TextButtons: {
-    textStyle:'bold',
+    fontStyle:'bold',
     fontWeight: '600',
 
 
   },
   footerWrapper: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },  
 
 

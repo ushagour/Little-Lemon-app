@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
 import AppButton from './Forms/AppButton';
+import colors from '../config/colors';
 
 const Footer = ({ formIsValid = false, onPress }) => {
   return (
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   buttonText: {
-    color: '#FFF',
+    color: colors.black,
     fontStyle: 'bold',
     fontSize: 16,
     fontWeight: '600',

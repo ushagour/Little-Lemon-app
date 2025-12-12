@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import {  StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import TextInput from '../components/Forms/TextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
 import colors from '../config/colors';
 
-const OnboardingScreen = ({ navigation, route }) => {
+const PROFILE_KEY = '@littlelemon_profile';
+
+const OnboardingScreen = ({ navigation, route, onComplete }) => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -78,12 +81,22 @@ const OnboardingScreen = ({ navigation, route }) => {
 
       <Footer
         formIsValid={formIsValid}
-        onPress={() => 
-    
-          
-          // navigation.navigate('Profile', { firstName, email })
-          navigation.navigate('Home')
-        }
+        onPress={async () => {
+          // Persist minimal profile info for later use in Profile screen
+          try {
+            const profile = { firstName, email };
+            await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+          } catch (e) {
+            console.log('Failed to save onboarding profile', e);
+          }
+
+          // Mark onboarding as complete
+          if (onComplete) {
+            onComplete();
+          }
+          // Navigate to Home with user data
+          navigation.navigate('Home', { firstName, email });
+        }}
       />
     </View>
   );
@@ -126,5 +139,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: colors.danger,
+  },
+  errorText: {  
+    color: colors.danger,
+    marginTop: 5,
+    marginBottom: 15,
   },
 });

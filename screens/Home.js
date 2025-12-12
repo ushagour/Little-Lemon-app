@@ -17,6 +17,9 @@ import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
 import { getImageUrl } from '../api/getImageUrl';
 import AppButton from '../components/Forms/AppButton';
+import Avatar from '../components/ui/Avatar';
+import { Ionicons } from '@expo/vector-icons';
+import Card from '../components/ui/Card';
 
 
 
@@ -36,6 +39,11 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+
+
+
+
+
 function Home({ navigation }) {
   const db = useSQLiteContext();
   const [query, setQuery] = useState('');
@@ -44,9 +52,24 @@ function Home({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
   const [loadedFrom, setLoadedFrom] = useState("");
+  const [profile, setProfile] = useState(null);
+  const PROFILE_KEY = '@littlelemon_profile';
 
+  
+const loadProfile = async () => {  
+       const json = await AsyncStorage.getItem(PROFILE_KEY);
+          if (json) {
+            const data = JSON.parse(json);
+            setProfile(data.name);
+            console.log('Loaded profile from AsyncStorage:', data.firstName);
+          }
+        };
 
   useEffect(() => {
+
+
+    loadProfile();
+
 
     const init = async () => {
       if (!db) {
@@ -64,6 +87,7 @@ function Home({ navigation }) {
         const rows = await getAllItems(db); // returns [] if empty
         if (rows && rows.length > 0) {
           setMenuData(rows.map(mapRowToUI));
+                  setLoadedFrom("SQLite DB");
           return;
         }
 
@@ -119,26 +143,15 @@ function Home({ navigation }) {
     return matchesCategory;
   });
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }  } style={styles.cardImage} />
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{item.name}</Text>
-        <Text style={styles.cardDescription} numberOfLines={2} ellipsizeMode="tail">{item.description}</Text>
-        <Text style={styles.cardPrice}>{item.price}</Text>
-      </View>
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('Profile')}>
-        <Text style={styles.addButtonText}>Order</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
+  
   return (
     <View style={styles.container}>
 
       <Header
-        onLeftPress={() => navigation.goBack()}
-        rightContent={<Image source={require('../assets/images/Profile.png')} style={{ width: 24, height: 24 }} />}
+        rightContent={
+          profile?(<Avatar name={profile.firstName} size={32} />):
+        <Ionicons name="person-circle" size={24} color="#fff" />}
+
         onRightPress={() => {
           navigation.navigate('Profile');
         }}
@@ -149,11 +162,11 @@ function Home({ navigation }) {
         <View style={styles.bannerContent}>
           <View style={styles.bannerText}>
             <Text style={styles.bannerTitle}>Little Lemon</Text>
-            <Text style={styles.bannerSubtitle}>Fresh Mediterranean dishes</Text>
+            <Text style={styles.bannerSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search menu"
+              placeholder="Search..."
               style={styles.searchTransparent}
               placeholderTextColor="#fff"
             />
@@ -163,10 +176,7 @@ function Home({ navigation }) {
       </View>    
 
       <View style={styles.listHeader}>
-        <Text style={styles.sectionTitle}>Menu</Text>
-        <Text style={styles.sectionSub}>Popular dishes</Text>
-           <Text style={styles.sectionSub}>source : {loadedFrom}</Text>
-          {/* <AppButton title="clearDB" onPress={async () => {clearMenuTable(db); setMenuData([]);}} /> */}
+        <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
 
       </View>
 
@@ -184,7 +194,7 @@ function Home({ navigation }) {
         </ScrollView>
       </View>
 
-      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} contentContainerStyle={styles.list} />
+      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={({ item }) => <Card item={item} /> } contentContainerStyle={styles.list} />
     </View>
   );
 };
@@ -192,9 +202,9 @@ function Home({ navigation }) {
 export default Home;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.secondary4 },
   banner: {
-    height: 200,
+    height: 250,
     padding: 14,
     justifyContent: 'center',
     backgroundColor: colors.primary1,
@@ -202,7 +212,7 @@ const styles = StyleSheet.create({
 
   },
   bannerTitle: { color: colors.primary2, fontSize: 28, fontWeight: '700' },
-  bannerSubtitle: { color: colors.white, marginTop: 4 },
+  bannerSubtitle: { color: colors.white, marginTop: 2, fontSize: 18, lineHeight: 22 },
   search: {
     marginTop: 12,
     backgroundColor: '#fff',
@@ -246,7 +256,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#F1F1F1',
+    backgroundColor: colors.secondary2,
     marginRight: 8,
   },
   tagButtonSelected: { backgroundColor: colors.primary1 },
@@ -256,24 +266,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: '700' },
   sectionSub: { color: '#666', marginTop: 4 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardImage: { width: 70, height: 70, borderRadius: 8, marginRight: 12 },
-  cardBody: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  cardDescription: { color: '#666' },
-  cardPrice: { color: '#666', marginTop: 6 },
+
   addButton: {
     backgroundColor: colors.primary1,
     paddingVertical: 8,

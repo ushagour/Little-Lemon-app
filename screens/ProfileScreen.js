@@ -1,66 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
 import AppCheckbox from '../components/Forms/AppCheckbox';
 import { MaskedTextInput } from "react-native-mask-text";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Avatar from '../components/ui/Avatar';
+import Header from '../components/Header';
 
 
 const ProfileScreen = ({ route, navigation }) => {
   const PROFILE_KEY = '@littlelemon_profile';
-  const { firstName = '', email = '' } = route?.params || {};
 
-  // allow editing in-place
-  const [editFirstName, setEditFirstName] = useState(firstName);
-  const [familyName, setFamilyName] = useState(route?.params?.familyName || '');
-  const [editEmail, setEditEmail] = useState(email);
+  // Initialize with empty strings, will load from AsyncStorage
+  const [editFirstName, setEditFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   // phoneMasked holds the formatted string shown in the input (e.g. +1 (555) 555-5555)
   // phoneRaw holds digits only (e.g. 5555555555)
-  const [phoneMasked, setPhoneMasked] = useState(route?.params?.phone || '');
-  const [phoneRaw, setPhoneRaw] = useState((route?.params?.phone || '').replace(/\D/g, ''));
+  const [phoneMasked, setPhoneMasked] = useState('');
+  const [phoneRaw, setPhoneRaw] = useState('');
 
-  useEffect(() => {
-    // if route params change externally, update local state
-    setEditFirstName(firstName);
-    setEditEmail(email);
-    setFamilyName(route?.params?.familyName || '');
-    setPhoneMasked(route?.params?.phone || '');
-    setPhoneRaw((route?.params?.phone || '').replace(/\D/g, ''));
-  }, [route?.params]);
 
-  // load saved profile from AsyncStorage on mount (session)
+
+  // Call loadProfile once on mount
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const json = await AsyncStorage.getItem(PROFILE_KEY);
-        if (json) {
-          const data = JSON.parse(json);
-          if (data.firstName) setEditFirstName(data.firstName);
-          if (data.familyName) setFamilyName(data.familyName);
-          if (data.email) setEditEmail(data.email);
-          if (data.phone) {
-            setPhoneMasked(data.phone);
-            setPhoneRaw((data.phone || '').replace(/\D/g, ''));
-          }
-          if (typeof data.prefOrderStatus === 'boolean') setPrefOrderStatus(data.prefOrderStatus);
-          if (typeof data.prefPasswordChanges === 'boolean') setPrefPasswordChanges(data.prefPasswordChanges);
-          if (typeof data.prefSpecialOffers === 'boolean') setPrefSpecialOffers(data.prefSpecialOffers);
-          if (typeof data.prefNewsletter === 'boolean') setPrefNewsletter(data.prefNewsletter);
-        }
-      } catch (e) {
-        console.log('Failed to load profile from storage', e);
-      }
-    };
     loadProfile();
   }, []);
+
+
+
+  const Discard = () => {
+    // reset edits to last saved state
+    loadProfile();
+  };
+
+
+
+
+
+
+
+
+
+  const save = async () => {
+              // Collect profile data and include formatted phone
+              const profile = {
+                firstName: editFirstName,
+                email: editEmail,
+                lastName: lastName,
+                phone: phoneMasked,
+                prefOrderStatus,
+                prefPasswordChanges,
+                prefSpecialOffers,
+                prefNewsletter,
+              };
+              try {
+                
+                await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+              } catch (e) {
+                console.log('Failed to save profile to storage', e);
+              }
+              // update navigation params so other screens get the latest
+              navigation.setParams(profile);
+            }
+ 
+  const Logout = () => {
+                AsyncStorage.removeItem(PROFILE_KEY)
+                  .then(() => {
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: 'Onboarding' }],
+                    });
+                  })
+                  .catch((e) => {
+                    console.log('Failed to clear profile from storage', e);
+                  });
+              }
 
   const phoneIsValid = phoneRaw.length === 10;
 
   // derive avatar URI (if uploaded) and initials fallback
   const avatarUri = route?.params?.avatar || route?.params?.photo || null;
-  const initials = `${(editFirstName?.[0] || '').toUpperCase()}${(familyName?.[0] || '').toUpperCase()}`;
+  const initials = `${(editFirstName?.[0] || '').toUpperCase()}${(lastName?.[0] || '').toUpperCase()}`;
 
   // preference checkboxes
   const [prefOrderStatus, setPrefOrderStatus] = useState(false);
@@ -68,37 +92,61 @@ const ProfileScreen = ({ route, navigation }) => {
   const [prefSpecialOffers, setPrefSpecialOffers] = useState(false);
   const [prefNewsletter, setPrefNewsletter] = useState(false);
 
+  // Load profile from AsyncStorage
+  const loadProfile = async () => {
+    try {
+      const json = await AsyncStorage.getItem(PROFILE_KEY);
+      if (json) {
+        const data = JSON.parse(json);
+        // console.log('Loaded profile from AsyncStorage:', data);
+        if (data.firstName) setEditFirstName(data.firstName);
+        if (data.lastName) setLastName(data.lastName);
+        if (data.email) setEditEmail(data.email);
+        if (data.phone) {
+          setPhoneMasked(data.phone);
+          setPhoneRaw((data.phone || '').replace(/\D/g, ''));
+        }
+        if (typeof data.prefOrderStatus === 'boolean') setPrefOrderStatus(data.prefOrderStatus);
+        if (typeof data.prefPasswordChanges === 'boolean') setPrefPasswordChanges(data.prefPasswordChanges);
+        if (typeof data.prefSpecialOffers === 'boolean') setPrefSpecialOffers(data.prefSpecialOffers);
+        if (typeof data.prefNewsletter === 'boolean') setPrefNewsletter(data.prefNewsletter);
+      } else {
+        console.log('No profile found in AsyncStorage');
+      }
+    } catch (e) {
+      console.log('Failed to load profile from storage', e);
+    }
+  };
+
+  // Call loadProfile once on mount
 
 
 
 
-  const hasData = Boolean(firstName || email);
+
+  const hasData = Boolean(editFirstName || editEmail);
 
   return (
     <View style={styles.container}>
+      <Header 
+      
 
-      <View style={styles.header}>
+      leftContent={
             <TouchableOpacity
         onPress={() => navigation.goBack()}
-        style={styles.backButton}
-      >
-        <Text  style={styles.backButtonText}>back</Text>
+        style={styles.backButton}>
+      <Ionicons name="arrow-back" size={24} color="#fff" />
       </TouchableOpacity>
+      }
+      
+      
+      
+      
+      />
 
-        <Image source={avatarUri? avatarUri : initials} style={styles.logo} resizeMode="contain" />
 
-
-
-      <TouchableOpacity>
-        <Image
-          source={require('../assets/images/Profile.png')}   
-          style={styles.profileIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-      </View>
-
-   <View style={styles.ProfileWrapper}>   
+  <View style={styles.ProfileWrapper}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
           <Text style={styles.titleSmall}>Avatar</Text>
           <View style={styles.row}>
@@ -109,43 +157,27 @@ const ProfileScreen = ({ route, navigation }) => {
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitials}>{initials || 'NN'}</Text>
+                <Text style={styles.avatarInitials}>{initials || ''}</Text>
               </View>
             )}
           <View style={styles.avatarButtons}>
             <AppButton
-              title=""
+              title="change"
               onPress={() => { /* TODO: open image picker */ }}
               color="primary1"
-                         buttonStyle={styles.Smbtn}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
+              textStyle={[styles.TextButtons, { color: colors.white }]}
 
             />
             <AppButton
-              title=""
+              title="remove"
               onPress={() => { /* TODO: remove avatar */ }}
-              color="danger"
-                         buttonStyle={styles.Smbtn}
+              color="white"
+              buttonStyle={styles.discardButton}
+              textStyle={{...styles.TextButtons, color: colors.primary1}}
 
             />
-            <AppButton
-              title="logout"
-              //clear stored profile and navigate to splash
-              onPress={() => {
-                AsyncStorage.removeItem(PROFILE_KEY)
-                  .then(() => {
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'Splash' }],
-                    });
-                  })
-                  .catch((e) => {
-                    console.log('Failed to clear profile from storage', e);
-                  });
-              }}
-              color="secondary2"
-                         buttonStyle={styles.Smbtn}
-
-            />
+      
           </View>
           </View>
 
@@ -159,7 +191,7 @@ const ProfileScreen = ({ route, navigation }) => {
           </View>
 
           <View style={styles.inputRow}>
-                    <TextInput value={familyName} placeholder="Family Name" onChangeText={setFamilyName} styleInput={styles.input} />
+                    <TextInput value={lastName} placeholder="Last Name" onChangeText={setLastName} styleInput={styles.input} />
           </View>
 
           <View style={styles.inputRow}>
@@ -189,6 +221,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
           {!hasData && <Text style={styles.noData}>No profile data provided.</Text>}
 
+            </View>
 {/* //design for checkbox like figma */}
 
 <View style={styles.checkBoxContainer}>
@@ -224,42 +257,39 @@ const ProfileScreen = ({ route, navigation }) => {
        
       
 
-          <AppButton
-            title="Save"
-            onPress={async () => {
-              // Collect profile data and include formatted phone
-              const profile = {
-                firstName: editFirstName,
-                email: editEmail,
-                familyName,
-                phone: phoneMasked,
-                prefOrderStatus,
-                prefPasswordChanges,
-                prefSpecialOffers,
-                prefNewsletter,
-              };
-              try {
-                console.log(profile);
-                
-                await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-              } catch (e) {
-                console.log('Failed to save profile to storage', e);
-              }
-              // update navigation params so other screens get the latest
-              navigation.setParams(profile);
-            }}
-            color="primary2"
-            disabled={!phoneIsValid}
-            buttonStyle={styles.saveButton}
-          />
+        
+
+           
 
  </View>
- </View>
-  
-  
-   </View>
- 
+   <AppButton
+              title="logout"
+              //clear stored profile and navigate to splash
+              onPress={Logout}
+              color="primary2"
+             buttonStyle={styles.LogoutButton}
+             textStyle={styles.TextButtons}
 
+            />
+          <View style={styles.footerWrapper}>
+            <AppButton
+              title="Discard Changes"
+              onPress={Discard}
+              color="white"
+              disabled={!phoneIsValid}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
+            />
+            <AppButton
+              title="Save Changes"
+              onPress={save}
+              color="primary1"
+              disabled={!phoneIsValid}
+              textStyle={[styles.TextButtons, { color: colors.white }]}
+            />
+          </View>
+
+    </ScrollView>
+    </View>
     </View>
   );
 };
@@ -269,52 +299,35 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+
+    padding: 15,
     backgroundColor: '#EDEFEE',
     justifyContent: 'flex-start',
+
   },
-     header: {
-      height: 64, // compact header height so logo has minimal surrounding space
-      backgroundColor: '#EDEFEE',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 12,
-      marginBottom: 20,
-      padding: 0,
-    },
+
       backButton: {
  
     backgroundColor: colors.primary1,
     borderRadius: 4,
-    padding: 10,
   },
-  backButtonText: {
-    color: colors.white,
-    fontWeight: '600',    
+ 
+ avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D9EAF6',
   },
-  profileIcon: {
-    width: 40,
-    height: 40, 
-        borderRadius: 20,
-  }, 
-  logo: { 
-    width: 150,
-    height: 50,
+  avatarInitials: {
+    color: colors.primary1,
+    fontSize: 28,
+    fontWeight: '700',
+  },
 
-  },
-  ProfileWrapper: {
-    backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 10,
-    // shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    // elevation for Android
-    elevation: 4,
-  },
   ProfileWrapperTitle: {
     fontSize: 24,
     fontStyle:'bold',
@@ -322,6 +335,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: colors.textPrimary,
   },
+    title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
+  },
+
   avatar: {
     width: 80,
     height: 80,
@@ -339,18 +358,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#D9EAF6',
   },
-  avatarInitials: {
-    color: colors.primary1,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 20,
+  ProfileWrapper: {
+    flex: 2,
+    width: '100%',
+    backgroundColor: colors.white,
+    padding: 16,
+    borderRadius: 10,
+    // shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    // elevation for Android
+    // elevation: 4,
+    // marginBottom: 20,
   },
   titleSmall: {
     fontSize: 12,
+    color: colors.primary1,
+    fontFamily:'bold'
+
   },
   row: {
     flexDirection: 'row',
@@ -359,9 +386,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   avatarButtons: {
-  paddingVertical: 6,
+      paddingVertical: 6,
       flexDirection: 'row',
       height: 120,
+      alignItems: 'center',
+      justifyContent: 'space-between',  
+
   },
 
   inputContainer: {
@@ -412,20 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
-  checkBox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#BFC9CC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  checkBoxChecked: {
-    backgroundColor: colors.primary1,
-    borderColor: colors.primary1,
-  },
+
   checkMark: {
     color: '#fff',
     fontSize: 14,
@@ -440,6 +457,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignSelf: 'flex-start',
   },
+  LogoutButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    width: '100%',//full width
+    justifyContent: 'center',
+    alignItems: 'center', 
+  },
   saveButton: {
     marginTop: 12,
     alignSelf: 'flex-start',
@@ -447,12 +474,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
   },
-Smbtn: {
-    marginRight: 10,
-    paddingVertical: 6, 
-    paddingHorizontal: 12,
-  borderRadius: 6,
+  discardButton: {
+    borderColor: colors.primary1,
+    borderWidth: 1,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
   },
+  TextButtons: {
+    fontStyle:'bold',
+    fontWeight: '600',
+
+
+  },
+  footerWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },  
+
+
+
 
 
 });

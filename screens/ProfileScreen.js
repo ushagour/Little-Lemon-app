@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
@@ -22,6 +23,7 @@ const ProfileScreen = ({ route, navigation }) => {
   // phoneRaw holds digits only (e.g. 5555555555)
   const [phoneMasked, setPhoneMasked] = useState('');
   const [phoneRaw, setPhoneRaw] = useState('');
+  const [avatarUri, setAvatarUri] = useState(null);
 
 
 
@@ -35,6 +37,51 @@ const ProfileScreen = ({ route, navigation }) => {
   const Discard = () => {
     // reset edits to last saved state
     loadProfile();
+  };
+
+  // Pick image from gallery
+  const pickImage = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0].uri;
+        setAvatarUri(selectedImage);
+      }
+    } catch (error) {
+      console.log('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  // Remove avatar
+  const removeAvatar = () => {
+    Alert.alert(
+      'Remove Avatar',
+      'Are you sure you want to remove your profile picture?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: () => setAvatarUri(null)
+        }
+      ]
+    );
   };
 
 
@@ -52,6 +99,7 @@ const ProfileScreen = ({ route, navigation }) => {
                 email: editEmail,
                 lastName: lastName,
                 phone: phoneMasked,
+                avatar: avatarUri,
                 prefOrderStatus,
                 prefPasswordChanges,
                 prefSpecialOffers,
@@ -82,8 +130,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   const phoneIsValid = phoneRaw.length === 10;
 
-  // derive avatar URI (if uploaded) and initials fallback
-  const avatarUri = route?.params?.avatar || route?.params?.photo || null;
+  // derive initials fallback
   const initials = `${(editFirstName?.[0] || '').toUpperCase()}${(lastName?.[0] || '').toUpperCase()}`;
 
   // preference checkboxes
@@ -102,6 +149,7 @@ const ProfileScreen = ({ route, navigation }) => {
         if (data.firstName) setEditFirstName(data.firstName);
         if (data.lastName) setLastName(data.lastName);
         if (data.email) setEditEmail(data.email);
+        if (data.avatar) setAvatarUri(data.avatar);
         if (data.phone) {
           setPhoneMasked(data.phone);
           setPhoneRaw((data.phone || '').replace(/\D/g, ''));
@@ -163,7 +211,7 @@ const ProfileScreen = ({ route, navigation }) => {
           <View style={styles.avatarButtons}>
             <AppButton
               title="change"
-              onPress={() => { /* TODO: open image picker */ }}
+              onPress={pickImage}
               color="primary1"
               buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
               textStyle={[styles.TextButtons, { color: colors.white }]}
@@ -171,7 +219,7 @@ const ProfileScreen = ({ route, navigation }) => {
             />
             <AppButton
               title="remove"
-              onPress={() => { /* TODO: remove avatar */ }}
+              onPress={removeAvatar}
               color="white"
               buttonStyle={styles.discardButton}
               textStyle={{...styles.TextButtons, color: colors.primary1}}

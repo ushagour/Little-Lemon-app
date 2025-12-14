@@ -8,11 +8,14 @@ import {
   SafeAreaView,
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
+import { useFonts } from './hooks/useFonts';
 
 
 export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(false);
+  const { fontsLoaded, fontError } = useFonts();
+
 
   // Load onboarding state from AsyncStorage
   React.useEffect(() => {
@@ -36,8 +39,8 @@ export default function App() {
     setIsOnboardingCompleted(true);
   };
 
-  if (isLoading) {
-    // Show splash while reading from AsyncStorage
+  if (isLoading || !fontsLoaded) {
+    // Show splash while reading from AsyncStorage or loading fonts
     return (
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1 }}>

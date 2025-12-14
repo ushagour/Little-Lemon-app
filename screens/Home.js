@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
 
 
   },
-  bannerTitle: { color: colors.primary2, fontSize: 28, fontWeight: '700' },
+  bannerTitle: { color: colors.primary2, fontSize: 28, fontWeight: '700',fontFamily: 'Karla' },
   bannerSubtitle: { color: colors.white, marginTop: 2, fontSize: 18, lineHeight: 22 },
   search: {
     marginTop: 12,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   tagText: { color: '#333' },
   tagTextSelected: { color: '#fff', fontWeight: '600' },
   listHeader: { padding: 16, paddingTop: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: '700' },
+  sectionTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Karla' ,fontStyle: 'bold'},
   sectionSub: { color: '#666', marginTop: 4 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 

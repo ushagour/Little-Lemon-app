@@ -38,5 +38,5 @@ const styles = StyleSheet.create({
       cardBody: { flex: 1 },
       cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
       cardDescription: { color: '#666' },
-      cardPrice: { color: '#666', marginTop: 6, fontWeight: '700' ,fontFamily:'Arial', fontSize:16},
+      cardPrice: { color: colors.secondary1, marginTop: 6, fontWeight: '700' ,fontFamily:'Arial', fontSize:16},
 })

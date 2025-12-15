@@ -9,12 +9,19 @@ export const useFonts = () => {
     const loadFonts = async () => {
       try {
         // Add your fonts here with custom names
+
+
+
+
+
+
         await Font.loadAsync({
-          'Karla': require('../assets/fonts/Karla-Regular.ttf'),
-          // 'Karla-Bold': require('../assets/fonts/Karla-Bold.ttf'),
-          'MarkaziText': require('../assets/fonts/MarkaziText-Regular.ttf'),
-          // 'MarkaziText-Bold': require('../assets/fonts/MarkaziText-Bold.ttf'),
-          // Add more fonts as needed
+         "Karla-Regular": require("../assets/fonts/Karla-Regular.ttf"),
+          "Karla-Medium": require("../assets/fonts/Karla-Medium.ttf"),
+          "Karla-Bold": require("../assets/fonts/Karla-Bold.ttf"),
+          "Karla-ExtraBold": require("../assets/fonts/Karla-ExtraBold.ttf"),
+          "MarkaziText-Regular": require("../assets/fonts/MarkaziText-Regular.ttf"),
+          "MarkaziText-Medium": require("../assets/fonts/MarkaziText-Medium.ttf"),
         });
         setFontsLoaded(true);
       } catch (error) {

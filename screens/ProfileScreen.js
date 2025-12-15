@@ -10,9 +10,11 @@ import { MaskedTextInput } from "react-native-mask-text";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Avatar from '../components/ui/Avatar';
 import Header from '../components/Header';
+import { useAuth } from '../hooks/useAuth';
 
 
 const ProfileScreen = ({ route, navigation }) => {
+  const { user, updateUser, clearUser } = useAuth();
   const PROFILE_KEY = '@littlelemon_profile';
 
   // Initialize with empty strings, will load from AsyncStorage
@@ -37,10 +39,10 @@ const ProfileScreen = ({ route, navigation }) => {
 
 
 
-  // Call loadProfile once on mount
+  // Load profile when user data changes from context
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [user]);
 
 
 
@@ -115,29 +117,27 @@ const ProfileScreen = ({ route, navigation }) => {
                 prefSpecialOffers,
                 prefNewsletter,
               };
-              try {
-                
-                await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-                showToast('Profile updated');
-              } catch (e) {
-                console.log('Failed to save profile to storage', e);
+              
+              const success = await updateUser(profile);
+              if (success) {
+                showToast('Profile updated successfully');
+              } else {
                 Alert.alert('Error', 'Unable to save your profile. Please try again.');
               }
               // update navigation params so other screens get the latest
               navigation.setParams(profile);
             }
  
-  const Logout = () => {
-                AsyncStorage.removeItem(PROFILE_KEY)
-                  .then(() => {
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'Onboarding' }],
-                    });
-                  })
-                  .catch((e) => {
-                    console.log('Failed to clear profile from storage', e);
+  const Logout = async () => {
+                const success = await clearUser();
+                if (success) {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Onboarding' }],
                   });
+                } else {
+                  Alert.alert('Error', 'Failed to logout. Please try again.');
+                }
               }
 
   const phoneIsValid = phoneRaw.length === 10;
@@ -152,29 +152,20 @@ const ProfileScreen = ({ route, navigation }) => {
   const [prefNewsletter, setPrefNewsletter] = useState(false);
 
   // Load profile from AsyncStorage
-  const loadProfile = async () => {
-    try {
-      const json = await AsyncStorage.getItem(PROFILE_KEY);
-      if (json) {
-        const data = JSON.parse(json);
-        // console.log('Loaded profile from AsyncStorage:', data);
-        if (data.firstName) setEditFirstName(data.firstName);
-        if (data.lastName) setLastName(data.lastName);
-        if (data.email) setEditEmail(data.email);
-        if (data.avatar) setAvatarUri(data.avatar);
-        if (data.phone) {
-          setPhoneMasked(data.phone);
-          setPhoneRaw((data.phone || '').replace(/\D/g, ''));
-        }
-        if (typeof data.prefOrderStatus === 'boolean') setPrefOrderStatus(data.prefOrderStatus);
-        if (typeof data.prefPasswordChanges === 'boolean') setPrefPasswordChanges(data.prefPasswordChanges);
-        if (typeof data.prefSpecialOffers === 'boolean') setPrefSpecialOffers(data.prefSpecialOffers);
-        if (typeof data.prefNewsletter === 'boolean') setPrefNewsletter(data.prefNewsletter);
-      } else {
-        console.log('No profile found in AsyncStorage');
+  const loadProfile = () => {
+    if (user) {
+      if (user.firstName) setEditFirstName(user.firstName);
+      if (user.lastName) setLastName(user.lastName);
+      if (user.email) setEditEmail(user.email);
+      if (user.avatar) setAvatarUri(user.avatar);
+      if (user.phone) {
+        setPhoneMasked(user.phone);
+        setPhoneRaw((user.phone || '').replace(/\D/g, ''));
       }
-    } catch (e) {
-      console.log('Failed to load profile from storage', e);
+      if (typeof user.prefOrderStatus === 'boolean') setPrefOrderStatus(user.prefOrderStatus);
+      if (typeof user.prefPasswordChanges === 'boolean') setPrefPasswordChanges(user.prefPasswordChanges);
+      if (typeof user.prefSpecialOffers === 'boolean') setPrefSpecialOffers(user.prefSpecialOffers);
+      if (typeof user.prefNewsletter === 'boolean') setPrefNewsletter(user.prefNewsletter);
     }
   };
 

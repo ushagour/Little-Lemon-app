@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
       },
       cardImage: { width: 70, height: 70, borderRadius: 8, marginRight: 12 },
       cardBody: { flex: 1 },
-      cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-      cardDescription: { color: '#666' },
-      cardPrice: { color: colors.secondary1, marginTop: 6, fontWeight: '700' ,fontFamily:'Arial', fontSize:16},
+      cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4,fontFamily:'Karla-Bold'},
+      cardDescription: { color: '#666', fontSize: 14 ,fontFamily:'Karla-Regular'},
+      cardPrice: { color: colors.secondary1, marginTop: 6, fontWeight: '700' ,fontFamily:'Karla-Bold', fontSize:16},
 })

@@ -7,15 +7,12 @@ import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
 import AppCheckbox from '../components/Forms/AppCheckbox';
 import { MaskedTextInput } from "react-native-mask-text";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Avatar from '../components/ui/Avatar';
 import Header from '../components/Header';
 import { useAuth } from '../hooks/useAuth';
 
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user, updateUser, clearUser } = useAuth();
-  const PROFILE_KEY = '@littlelemon_profile';
 
   // Initialize with empty strings, will load from AsyncStorage
   const [editFirstName, setEditFirstName] = useState('');
@@ -170,7 +167,6 @@ const ProfileScreen = ({ route, navigation }) => {
   };
 
   // Call loadProfile once on mount
-
 
 
 

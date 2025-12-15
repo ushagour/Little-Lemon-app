@@ -13,6 +13,8 @@ export const AuthProvider = ({ children }) => {
     const loadUser = async () => {
       try {
         const json = await AsyncStorage.getItem(PROFILE_KEY);
+
+        
         if (json) {
           const data = JSON.parse(json);
           setUser(data);

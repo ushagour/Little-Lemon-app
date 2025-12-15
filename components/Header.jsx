@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
 import AppButton from './Forms/AppButton';
 import colors from '../config/colors';
 import { useAuth } from '../hooks/useAuth';
@@ -15,6 +15,8 @@ import Avatar from './ui/Avatar';
  */
 const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, onRightPress = null }) => {
   const { user } = useAuth();
+
+  const rightNode = rightContent ?? (user ? <Avatar /> : null);
 
   return (
     <View style={styles.header}>
@@ -35,12 +37,10 @@ const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, o
       </View>
 
       <View style={styles.side}>
-        {rightContent ? (
-          <AppButton onPress={onRightPress} buttonStyle={styles.sideButton}>
-            {rightContent}
-          </AppButton>
-        ) : user?.firstName ? (
-          <Avatar name={user.firstName} size={40} />
+        {rightNode ? (
+          <TouchableOpacity onPress={onRightPress} style={styles.sideButton} disabled={!onRightPress}>
+            {rightNode}
+          </TouchableOpacity>
         ) : (
           <View style={styles.sidePlaceholder} />
         )}

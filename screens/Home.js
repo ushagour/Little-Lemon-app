@@ -16,11 +16,11 @@ import colors from '../config/colors';
 import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
 import { getImageUrl } from '../api/getImageUrl';
-import Avatar from '../components/ui/Avatar';
-import { Ionicons } from '@expo/vector-icons';
+
 import Card from '../components/ui/Card';
 import SeparatorView from '../components/ui/SeparatorView';
 import SearchView from '../components/Forms/SearchView';
+import { useAuth } from '../hooks/useAuth';
 
 
 
@@ -47,31 +47,21 @@ function useDebounce(value, delay) {
 
 function Home({ navigation }) {
   const db = useSQLiteContext();
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
+  
 
   const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
   const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
-  const [profile, setProfile] = useState(null);
-  const PROFILE_KEY = '@littlelemon_profile';
-
   
-const loadProfile = async () => {  
-       const json = await AsyncStorage.getItem(PROFILE_KEY);
-       console.log(json);
-       
-          // if (json) {
-          //   const data = JSON.parse(json);
-          //   setProfile(data.name);
-          //   console.log('Loaded profile from AsyncStorage:', data.firstName);
-          // }
-        };
+
 
   useEffect(() => {
 
 
-    loadProfile();
+    
 
 
     const init = async () => {
@@ -155,8 +145,6 @@ const loadProfile = async () => {
 
 
       <Header
-        rightContent={<Avatar avatarUri={profile?.avatar} initials={profile?.firstName}  />}
-    
         onRightPress={() => {
           navigation.navigate('Profile');
         }}

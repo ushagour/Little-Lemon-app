@@ -20,6 +20,8 @@ import AppButton from '../components/Forms/AppButton';
 import Avatar from '../components/ui/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../components/ui/Card';
+import SeparatorView from '../components/ui/SeparatorView';
+import SearchView from '../components/Forms/SearchView';
 
 
 
@@ -163,16 +165,16 @@ const loadProfile = async () => {
           <View style={styles.bannerText}>
             <Text style={styles.bannerTitle}>Little Lemon</Text>
             <Text style={styles.bannerSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search..."
-              style={styles.searchTransparent}
-              placeholderTextColor="#fff"
-            />
+ 
           </View>
           <Image source={require('../assets/images/Hero image.png')} style={styles.bannerRightImage} />
         </View>
+        
+        <SearchView 
+        searchText={query}
+        onChange={setQuery} 
+        />
+
       </View>    
 
       <View style={styles.listHeader}>
@@ -194,7 +196,13 @@ const loadProfile = async () => {
         </ScrollView>
       </View>
 
-      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={({ item }) => <Card item={item} /> } contentContainerStyle={styles.list} />
+      <FlatList
+       data={filtered} 
+       keyExtractor={(i) => i.id}
+        renderItem={({ item }) => <Card item={item} /> } 
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={SeparatorView}
+       />
     </View>
   );
 };
@@ -232,16 +240,7 @@ const styles = StyleSheet.create({
   },
   bannerText: { flex: 1, paddingRight: 12 },
   bannerRightImage: { width: 120, height: 120, borderRadius: 12, opacity: 0.96 },
-  searchTransparent: {
-    marginTop: 12,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.36)',
-    color: colors.white,
-  },
+
   descriptionWrap: { paddingHorizontal: 16, paddingVertical: 12 },
  descriptionImage:{
   width: 70,

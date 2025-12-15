@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
@@ -24,6 +24,16 @@ const ProfileScreen = ({ route, navigation }) => {
   const [phoneMasked, setPhoneMasked] = useState('');
   const [phoneRaw, setPhoneRaw] = useState('');
   const [avatarUri, setAvatarUri] = useState(null);
+
+
+
+  const showToast = (message) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Notice', message);
+    }
+  };
 
 
 
@@ -108,8 +118,10 @@ const ProfileScreen = ({ route, navigation }) => {
               try {
                 
                 await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+                showToast('Profile updated');
               } catch (e) {
                 console.log('Failed to save profile to storage', e);
+                Alert.alert('Error', 'Unable to save your profile. Please try again.');
               }
               // update navigation params so other screens get the latest
               navigation.setParams(profile);

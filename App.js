@@ -9,6 +9,7 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import { useFonts } from './hooks/useFonts';
+import { AuthProvider } from './context/AuthContext';
 
 
 export default function App() {
@@ -53,15 +54,17 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
-        <SQLiteProvider
-          databaseName="little_lemon.db"
-          // useSuspense={false}
-        >
-          <AppNavigator
-            isOnboardingCompleted={isOnboardingCompleted}
-            onCompleteOnboarding={completeOnboarding}
-          />
-        </SQLiteProvider>
+        <AuthProvider>
+          <SQLiteProvider
+            databaseName="little_lemon.db"
+            // useSuspense={false}
+          >
+            <AppNavigator
+              isOnboardingCompleted={isOnboardingCompleted}
+              onCompleteOnboarding={completeOnboarding}
+            />
+          </SQLiteProvider>
+        </AuthProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

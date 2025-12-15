@@ -1,7 +1,9 @@
 import React from 'react';
-import { Image, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
 import AppButton from './Forms/AppButton';
 import colors from '../config/colors';
+import { useAuth } from '../hooks/useAuth';
+import Avatar from './ui/Avatar';
 
 /**
  * Header with three columns: left button, centered logo, right profile/content.
@@ -12,6 +14,10 @@ import colors from '../config/colors';
  * - onRightPress: handler for right area
  */
 const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, onRightPress = null }) => {
+  const { user } = useAuth();
+
+  const rightNode = rightContent ?? (user ? <Avatar /> : null);
+
   return (
     <View style={styles.header}>
       <View style={styles.side}>
@@ -31,10 +37,10 @@ const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, o
       </View>
 
       <View style={styles.side}>
-        {rightContent ? (
-          <AppButton onPress={onRightPress} buttonStyle={styles.sideButton}>
-            {rightContent}
-          </AppButton>
+        {rightNode ? (
+          <TouchableOpacity onPress={onRightPress} style={styles.sideButton} disabled={!onRightPress}>
+            {rightNode}
+          </TouchableOpacity>
         ) : (
           <View style={styles.sidePlaceholder} />
         )}

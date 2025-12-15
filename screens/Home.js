@@ -16,10 +16,11 @@ import colors from '../config/colors';
 import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
 import { getImageUrl } from '../api/getImageUrl';
-import AppButton from '../components/Forms/AppButton';
-import Avatar from '../components/ui/Avatar';
-import { Ionicons } from '@expo/vector-icons';
+
 import Card from '../components/ui/Card';
+import SeparatorView from '../components/ui/SeparatorView';
+import SearchView from '../components/Forms/SearchView';
+import { useAuth } from '../hooks/useAuth';
 
 
 
@@ -46,29 +47,21 @@ function useDebounce(value, delay) {
 
 function Home({ navigation }) {
   const db = useSQLiteContext();
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
+  
+
   const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
   const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [menuData, setMenuData] = useState([]);
-  const [loadedFrom, setLoadedFrom] = useState("");
-  const [profile, setProfile] = useState(null);
-  const PROFILE_KEY = '@littlelemon_profile';
-
   
-const loadProfile = async () => {  
-       const json = await AsyncStorage.getItem(PROFILE_KEY);
-          if (json) {
-            const data = JSON.parse(json);
-            setProfile(data.name);
-            console.log('Loaded profile from AsyncStorage:', data.firstName);
-          }
-        };
+
 
   useEffect(() => {
 
 
-    loadProfile();
+    
 
 
     const init = async () => {
@@ -87,7 +80,6 @@ const loadProfile = async () => {
         const rows = await getAllItems(db); // returns [] if empty
         if (rows && rows.length > 0) {
           setMenuData(rows.map(mapRowToUI));
-                  setLoadedFrom("SQLite DB");
           return;
         }
 
@@ -103,7 +95,6 @@ const loadProfile = async () => {
         const loaded = await getAllItems(db);
         
         setMenuData(loaded.map(mapRowToUI));
-        setLoadedFrom("SQLite DB");
       } catch (e) {
         console.error('Init DB/fetch error', e);
         // fallback to remote fetch if DB flow failed
@@ -143,36 +134,38 @@ const loadProfile = async () => {
     return matchesCategory;
   });
 
+
+
+  
+
   
   return (
     <View style={styles.container}>
 
-      <Header
-        rightContent={
-          profile?(<Avatar name={profile.firstName} size={32} />):
-        <Ionicons name="person-circle" size={24} color="#fff" />}
 
+
+      <Header
         onRightPress={() => {
           navigation.navigate('Profile');
         }}
       />
 
-      <View style={styles.banner}>
-        <View style={styles.bannerOverlay} />
-        <View style={styles.bannerContent}>
-          <View style={styles.bannerText}>
-            <Text style={styles.bannerTitle}>Little Lemon</Text>
-            <Text style={styles.bannerSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search..."
-              style={styles.searchTransparent}
-              placeholderTextColor="#fff"
-            />
+      <View style={styles.hero}>
+        <View style={styles.heroOverlay} />
+        <View style={styles.heroContent}>
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>Little Lemon</Text>
+            <Text style={styles.heroSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
+ 
           </View>
-          <Image source={require('../assets/images/Hero image.png')} style={styles.bannerRightImage} />
+          <Image source={require('../assets/images/Hero image.png')} style={styles.heroRightImage} />
         </View>
+        
+        <SearchView 
+        searchText={query}
+        onChange={setQuery} 
+        />
+
       </View>    
 
       <View style={styles.listHeader}>
@@ -194,7 +187,13 @@ const loadProfile = async () => {
         </ScrollView>
       </View>
 
-      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={({ item }) => <Card item={item} /> } contentContainerStyle={styles.list} />
+      <FlatList
+       data={filtered} 
+       keyExtractor={(i) => i.id}
+        renderItem={({ item }) => <Card item={item} /> } 
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={SeparatorView}
+       />
     </View>
   );
 };
@@ -203,7 +202,7 @@ export default Home;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.secondary4 },
-  banner: {
+  hero: {
     height: 250,
     padding: 14,
     justifyContent: 'center',
@@ -211,8 +210,8 @@ const styles = StyleSheet.create({
 
 
   },
-  bannerTitle: { color: colors.primary2, fontSize: 28, fontWeight: '700',fontFamily: 'Karla' },
-  bannerSubtitle: { color: colors.white, marginTop: 2, fontSize: 18, lineHeight: 22 },
+  heroTitle: { color: colors.primary2, fontSize: 28, fontFamily: 'MarkaziText-Regular' },
+  heroSubtitle: { color: colors.white, marginTop: 2, fontSize: 18, lineHeight: 22, fontFamily: 'Karla-Regular' },
   search: {
     marginTop: 12,
     backgroundColor: '#fff',
@@ -221,27 +220,18 @@ const styles = StyleSheet.create({
     height: 40,
     marginBottom: 9
   },
-  bannerOverlay: {
+  heroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  bannerContent: {
+  heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  bannerText: { flex: 1, paddingRight: 12 },
-  bannerRightImage: { width: 120, height: 120, borderRadius: 12, opacity: 0.96 },
-  searchTransparent: {
-    marginTop: 12,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.36)',
-    color: colors.white,
-  },
+  heroText: { flex: 1, paddingRight: 12 },
+  heroRightImage: { width: 120, height: 120, borderRadius: 12, opacity: 0.96 },
+
   descriptionWrap: { paddingHorizontal: 16, paddingVertical: 12 },
  descriptionImage:{
   width: 70,
@@ -260,10 +250,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   tagButtonSelected: { backgroundColor: colors.primary1 },
-  tagText: { color: '#333' },
-  tagTextSelected: { color: '#fff', fontWeight: '600' },
+  tagText: { color: '#333', fontFamily: 'Karla-Medium' },
+  tagTextSelected: { color: '#fff', fontFamily: 'Karla-Bold' },
   listHeader: { padding: 16, paddingTop: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Karla' ,fontStyle: 'bold'},
+  sectionTitle: { fontSize: 20, fontFamily: 'Karla-Bold' },
   sectionSub: { color: '#666', marginTop: 4 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 

@@ -2,16 +2,23 @@ import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { Image } from 'react-native';
 import colors from '../../config/colors';
+import { useAuth } from '../../hooks/useAuth';
 
 
-const Avatar = ({avatarUri,initials}) => {
+
+const Avatar = () => {
+  
+const { user } = useAuth();
+  const initials = `${(user?.firstName?.[0] || '').toUpperCase()}${(user?.lastName?.[0] || '').toUpperCase()}`;
+  
+  
+
   return (
     <>
-        { avatarUri ? (
+        { user?.avatar ? (
                     <Image
-                      source={typeof avatarUri === 'string' ? { uri: avatarUri } : avatarUri}
-                    style={styles.profileIcon}
-                    resizeMode="contain" 
+                      source={{ uri: user.avatar }}
+                      style={{ width: 50, height: 50, borderRadius: 25 }}
                     />
                   ) : (
                     <View style={styles.InitialsWrapper}>

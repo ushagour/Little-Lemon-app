@@ -1,71 +1,39 @@
 import * as React from 'react';
 
 import SplashScreen from './screens/SplashScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './navigation/AppNavigator';
 import { SQLiteProvider } from 'expo-sqlite';
-import {
-  SafeAreaView,
-  SafeAreaProvider,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { useFonts } from './hooks/useFonts';
 import { AuthProvider } from './context/AuthContext';
 
 
 export default function App() {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = React.useState(false);
-  const { fontsLoaded, fontError } = useFonts();
+  const { fontsLoaded } = useFonts();
 
-
-  // Load onboarding state from AsyncStorage
-  React.useEffect(() => {
-    const loadData = async () => {
-      try {
-        const completed = await AsyncStorage.getItem('onboardingCompleted');
-        setIsOnboardingCompleted(completed === 'true');
-      } catch (e) {
-        console.log('Error reading onboarding data:', e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Simulate saving onboarding completion
-  const completeOnboarding = async () => {
-    await AsyncStorage.setItem('onboardingCompleted', 'true');
-    setIsOnboardingCompleted(true);
-  };
-
-  if (isLoading || !fontsLoaded) {
-    // Show splash while reading from AsyncStorage or loading fonts
+  if (!fontsLoaded) {
+    // Show splash while loading fonts
     return (
       <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <SplashScreen />
-        </SafeAreaView>
+        </View>
       </SafeAreaProvider>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
+      <View  style={{ flex: 1 }}>
+        <StatusBar style="light" />
         <AuthProvider>
-          <SQLiteProvider
-            databaseName="little_lemon.db"
-            // useSuspense={false}
-          >
-            <AppNavigator
-              isOnboardingCompleted={isOnboardingCompleted}
-              onCompleteOnboarding={completeOnboarding}
-            />
+          <SQLiteProvider databaseName="little_lemon.db">
+            <AppNavigator />
           </SQLiteProvider>
         </AuthProvider>
-      </SafeAreaView>
+      </View>
     </SafeAreaProvider>
   );
 }

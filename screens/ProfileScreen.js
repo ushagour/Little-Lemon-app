@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid,TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import TextInput from '../components/Forms/TextInput';
 import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
 import AppCheckbox from '../components/Forms/AppCheckbox';
@@ -113,6 +112,7 @@ const ProfileScreen = ({ route, navigation }) => {
                 prefPasswordChanges,
                 prefSpecialOffers,
                 prefNewsletter,
+                isAuthenticated: true,
               };
               
               const success = await updateUser(profile);
@@ -234,11 +234,11 @@ const ProfileScreen = ({ route, navigation }) => {
 
          
           <View style={styles.inputRow}>
-            <TextInput value={editFirstName} placeholder="First Name" onChangeText={setEditFirstName} styleInput={styles.input} />
+            <TextInput value={editFirstName} placeholder="First Name" onChangeText={setEditFirstName} style={styles.input} />
           </View>
 
           <View style={styles.inputRow}>
-                    <TextInput value={lastName} placeholder="Last Name" onChangeText={setLastName} styleInput={styles.input} />
+                    <TextInput value={lastName} placeholder="Last Name" onChangeText={setLastName} style={styles.input} />
           </View>
 
           <View style={styles.inputRow}>
@@ -346,15 +346,11 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
-    padding: 15,
     backgroundColor: '#EDEFEE',
     justifyContent: 'flex-start',
-
   },
-
-      backButton: {
- 
+   backButton: {
+        
     backgroundColor: colors.primary1,
     borderRadius: 4,
   },
@@ -376,14 +372,15 @@ const styles = StyleSheet.create({
   },
 
   ProfileWrapperTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontStyle:'bold',
     fontWeight: '600',
-    marginBottom: 12,
+    fontFamily: 'Karla-Bold',
     color: colors.textPrimary,
   },
     title: {
-    fontSize: 24,
+    fontSize: 28,
+    fontFamily: 'Karla-Bold',
     fontWeight: '700',
     marginBottom: 20,
   },
@@ -471,7 +468,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary1,
     paddingHorizontal: 12,
-    backgroundColor: '#F5F5F5',
     width: '100%',
 
   },
@@ -479,9 +475,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: '600',
-    marginBottom: 6,
+      fontFamily: 'MarkaziText-Medium',
+
     color: colors.textPrimary,
   },
   checkRow: {
@@ -497,6 +494,8 @@ const styles = StyleSheet.create({
   },
   checkLabel: {
     fontSize: 16,
+    marginLeft: 8,
+    fontFamily: 'MarkaziText-Medium',
     color: '#333',
   },
   errorText: {

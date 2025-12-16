@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, ImageBackground } from 'react-native';
+import { View, Text, Image, StyleSheet, ImageBackground } from 'react-native';
 
 const SplashScreen = ({ onGetStarted = () => {} }) => {
   return (

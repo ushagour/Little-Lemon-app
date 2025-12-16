@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import {  StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TextInput from '../components/Forms/TextInput';
+import TextInput from '../components/Forms/AppTextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
 import colors from '../config/colors';
-
+import Hero from '../components/Hero';
+import Label from '../components/Forms/Label';
+import { ScrollView } from 'react-native-gesture-handler';
+import AppTextInput from '../components/Forms/AppTextInput';
 const PROFILE_KEY = '@littlelemon_profile';
 
 const OnboardingScreen = ({ navigation, route, onComplete }) => {
@@ -44,47 +47,46 @@ const OnboardingScreen = ({ navigation, route, onComplete }) => {
    <View style={styles.container}>
       {/* Header */}
           <Header />
+      <Hero />
 
       {/* Content */}
 
-    <View style={styles.content}>
-        <Text style={styles.title}>Let us get to know you</Text>
-              <View style={{ width: '80%', alignItems: 'center' }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-                <Text style={styles.label}>First Name</Text>
-          <TextInput
+
+          <Label  text="Name" required={true} />
+          <AppTextInput
             style={[styles.input, !nameIsValid && firstName.length > 0 ? styles.inputError : null]}
             value={firstName}
             onChangeText={setFirstName}
-            accessibilityLabel="first-name"
           />
           {!nameIsValid && firstName.length > 0 ? (
               <Text style={styles.errorText}>Please enter a valid name (letters and spaces only).</Text>
             ) : null}
 
 
-                <Text style={styles.label}>Email</Text>
-         <TextInput
+          <Label  text="Email" required={true} />
+         <AppTextInput
             style={[styles.input, !emailIsValid && email.length > 0 ? styles.inputError : null]}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
-            accessibilityLabel="email"
           />
+
+
           {!emailIsValid && email.length > 0 ? (
             <Text style={styles.errorText}>Please enter a valid email address.</Text>
           ) : null}
 
-        </View>
-        </View>
+        </ScrollView>
 
       <Footer
         formIsValid={formIsValid}
         onPress={async () => {
           // Persist minimal profile info for later use in Profile screen
           try {
-            const profile = { firstName, email };
+            const profile = { firstName, email, isAuthenticated: true };
             await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
           } catch (e) {
             console.log('Failed to save onboarding profile', e);
@@ -95,7 +97,7 @@ const OnboardingScreen = ({ navigation, route, onComplete }) => {
             onComplete();
           }
           // Navigate to Home with user data
-          navigation.navigate('Home', { firstName, email });
+          navigation.navigate('Home');
         }}
       />
     </View>
@@ -110,33 +112,24 @@ const styles = StyleSheet.create({
     flex: 1, // take full screen height
   },
   content: {
-    flex: 3, // 3 parts of the screen (main section)
+    flex: 1,
+    padding: 20,
     backgroundColor: colors.secondary5,
-    alignItems: 'center',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 24,
-    marginTop: '20%',
-    marginBottom: '50%',
-    color: colors.textPrimary,
   },
     input: {
-    height: 50,
-    minWidth: 300,
-    borderWidth: 3,
-    borderColor: '#4F6770',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    
+    backgroundColor: colors.inputBackground || '#F5F5F5',
+    borderColor: colors.white,
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 18,
+    color: colors.textPrimary || '#333',
+    fontFamily: 'Karla-Regular',
+    marginBottom: 15,
   },
-    label: {
-    fontSize: 24,
-    fontWeight: '500',
-    marginBottom: 5,
-    color: colors.textPrimary,
-  },
+
+
   inputError: {
     borderColor: colors.danger,
   },

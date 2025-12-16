@@ -21,6 +21,7 @@ import Card from '../components/ui/Card';
 import SeparatorView from '../components/ui/SeparatorView';
 import SearchView from '../components/Forms/SearchView';
 import { useAuth } from '../hooks/useAuth';
+import Hero from '../components/Hero';
 
 
 
@@ -150,23 +151,13 @@ function Home({ navigation }) {
         }}
       />
 
-      <View style={styles.hero}>
-        <View style={styles.heroOverlay} />
-        <View style={styles.heroContent}>
-          <View style={styles.heroText}>
-            <Text style={styles.heroTitle}>Little Lemon</Text>
-            <Text style={styles.heroSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
- 
-          </View>
-          <Image source={require('../assets/images/Hero image.png')} style={styles.heroRightImage} />
-        </View>
-        
-        <SearchView 
-        searchText={query}
-        onChange={setQuery} 
-        />
+          <Hero>
+                   <SearchView 
+                    searchText={query}
+                    onChange={setQuery} 
+                    />
+          </Hero>
 
-      </View>    
 
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
@@ -202,35 +193,7 @@ export default Home;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.secondary4 },
-  hero: {
-    height: 250,
-    padding: 14,
-    justifyContent: 'center',
-    backgroundColor: colors.primary1,
 
-
-  },
-  heroTitle: { color: colors.primary2, fontSize: 28, fontFamily: 'MarkaziText-Regular' },
-  heroSubtitle: { color: colors.white, marginTop: 2, fontSize: 18, lineHeight: 22, fontFamily: 'Karla-Regular' },
-  search: {
-    marginTop: 12,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
-    marginBottom: 9
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-  heroContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  heroText: { flex: 1, paddingRight: 12 },
-  heroRightImage: { width: 120, height: 120, borderRadius: 12, opacity: 0.96 },
 
   descriptionWrap: { paddingHorizontal: 16, paddingVertical: 12 },
  descriptionImage:{

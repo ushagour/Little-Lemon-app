@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import colors from '../config/colors';
 import Hero from '../components/Hero';
 import Label from '../components/Forms/Label';
+import { ScrollView } from 'react-native-gesture-handler';
 import AppTextInput from '../components/Forms/AppTextInput';
 const PROFILE_KEY = '@littlelemon_profile';
 
@@ -50,8 +51,8 @@ const OnboardingScreen = ({ navigation, route, onComplete }) => {
 
       {/* Content */}
 
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-    <View style={styles.content}>
 
           <Label  text="Name" required={true} />
           <AppTextInput
@@ -78,7 +79,7 @@ const OnboardingScreen = ({ navigation, route, onComplete }) => {
             <Text style={styles.errorText}>Please enter a valid email address.</Text>
           ) : null}
 
-        </View>
+        </ScrollView>
 
       <Footer
         formIsValid={formIsValid}

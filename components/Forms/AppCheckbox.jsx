@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
+import colors from '../../config/colors';
 
 export default function AppCheckbox({ checked, onChange, label, style }) {
   return (
@@ -24,7 +25,7 @@ const styles = StyleSheet.create({
     width: 22, height: 22, borderRadius: 4, borderWidth: 1, borderColor: '#BFC9CC',
     alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
-  boxChecked: { backgroundColor: '#2E86AB', borderColor: '#2E86AB' },
+  boxChecked: { backgroundColor: colors.primary1, borderColor: colors.primary1 },
   check: { fontSize: 14, lineHeight: 14 },
-  label: { fontSize: 16, color: '#333' },
+  label: { fontSize: 16, color: colors.black},
 });

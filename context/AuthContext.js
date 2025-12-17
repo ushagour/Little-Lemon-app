@@ -10,7 +10,14 @@ export const AuthProvider = ({ children }) => {
 
   // Load user profile from AsyncStorage on mount
   useEffect(() => {
-    const loadUser = async () => {
+ 
+
+    loadUser();
+  }, []);
+
+
+
+     const loadUser = async () => {
       try {
         const json = await AsyncStorage.getItem(PROFILE_KEY);
 
@@ -26,9 +33,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    loadUser();
-  }, []);
-
+    
   // Update user profile in AsyncStorage and state
   const updateUser = async (userData) => {
     try {
@@ -41,8 +46,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Complete onboarding: merge provided profile data and set isUserOnboarded=true
+  const completeOnboarding = async (profileData) => {
+    try {
+      const nextUser = {
+        ...(user || {}),
+        ...(profileData || {}),
+        isUserOnboarded: true,
+      };
+      await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
+      return true;
+    } catch (e) {
+      console.log('Error completing onboarding:', e);
+      return false;
+    }
+  };
+
   // Clear user (logout)
-  const clearUser = async () => {
+  const logout = async () => {
     try {
       await AsyncStorage.removeItem(PROFILE_KEY);
       setUser(null);
@@ -53,11 +75,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
+
   const value = {
     user,
     isLoading,
     updateUser,
-    clearUser,
+    completeOnboarding,
+    isUserOnboarded: Boolean(user?.isUserOnboarded),
+    logout,
   };
 
   return (

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import {  StyleSheet, Text, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StyleSheet, Text, View, Alert } from 'react-native';
 import TextInput from '../components/Forms/AppTextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
@@ -9,9 +8,10 @@ import Hero from '../components/Hero';
 import Label from '../components/Forms/Label';
 import { ScrollView } from 'react-native-gesture-handler';
 import AppTextInput from '../components/Forms/AppTextInput';
-const PROFILE_KEY = '@littlelemon_profile';
+import { useAuth } from '../hooks/useAuth';
 
-const OnboardingScreen = ({ navigation, route, onComplete }) => {
+const OnboardingScreen = ({ navigation, route }) => {
+  const { completeOnboarding } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -84,20 +84,12 @@ const OnboardingScreen = ({ navigation, route, onComplete }) => {
       <Footer
         formIsValid={formIsValid}
         onPress={async () => {
-          // Persist minimal profile info for later use in Profile screen
-          try {
-            const profile = { firstName, email, isAuthenticated: true };
-            await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-          } catch (e) {
-            console.log('Failed to save onboarding profile', e);
+          const success = await completeOnboarding({ firstName, email });
+          if (success) {
+            navigation.navigate('Home');
+          } else {
+            Alert.alert('Error', 'Unable to complete onboarding. Please try again.');
           }
-
-          // Mark onboarding as complete
-          if (onComplete) {
-            onComplete();
-          }
-          // Navigate to Home with user data
-          navigation.navigate('Home');
         }}
       />
     </View>

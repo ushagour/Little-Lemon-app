@@ -27,5 +27,5 @@ const styles = StyleSheet.create({
   },
   boxChecked: { backgroundColor: colors.primary1, borderColor: colors.primary1 },
   check: { fontSize: 14, lineHeight: 14 },
-  label: { fontSize: 16, color: colors.black},
+  label: {  fontFamily: 'MarkaziText-Medium', fontSize: 18, color: colors.black},
 });

@@ -281,14 +281,13 @@ const styles = StyleSheet.create({
   },
   ProfileWrapperTitle: {
     fontSize: 28,
-    fontStyle: 'bold',
-    fontWeight: '600',
-    fontFamily: 'Karla-Bold',
+    fontWeight: '700',
+    fontFamily: 'MarkaziText-Medium',
     color: colors.textPrimary,
   },
   title: {
     fontSize: 28,
-    fontFamily: 'Karla-Bold',
+    fontFamily: 'MarkaziText-Medium',
     fontWeight: '700',
     marginBottom: 20,
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import AppButton from './Forms/AppButton';
 import colors from '../config/colors';
 import { useAuth } from '../hooks/useAuth';
@@ -14,18 +14,19 @@ import Avatar from './ui/Avatar';
  * - onRightPress: handler for right area
  */
 const Header = ({ onLeftPress = null, leftContent = null, rightContent = null, onRightPress = null }) => {
-  const { user } = useAuth();
+  const { isUserOnboarded } = useAuth();
 
-  const rightNode = rightContent ?? (user ? <Avatar /> : null);
+  // Only show avatar/profile button when user has completed onboarding
+  const rightNode = rightContent ?? (isUserOnboarded ? <Avatar /> : null);
 
   return (
     <View style={styles.header}>
       <View style={styles.side}>
    
      {leftContent ? (
-          <AppButton onPress={onLeftPress} buttonStyle={styles.sideButton}>
+          <TouchableOpacity onPress={onLeftPress} style={styles.sideButton}>
             {leftContent}
-          </AppButton>
+          </TouchableOpacity>
         ) : (
           <View style={styles.sidePlaceholder} />
         )}
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     marginBottom: 10,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
   },
   side: {
     width: 64,
@@ -67,15 +69,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   
   },
+  sideButton: {
+    paddingHorizontal: 8,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logo: {
-    width: 200,
-    height: 50,
-  },
+
 
   sideButtonText: {
     color: '#333',

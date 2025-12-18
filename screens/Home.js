@@ -15,7 +15,6 @@ import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
 import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
-import { getImageUrl } from '../api/getImageUrl';
 
 import Card from '../components/ui/Card';
 import SeparatorView from '../components/ui/SeparatorView';
@@ -237,7 +236,7 @@ function mapRowToUI(r, idx = 0) {
     description: r.description || '',
     price: r.price ? `$${r.price}` : '$0.00',
     category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-    image: getImageUrl(r.image) || require('../assets/images/placeholder.png'),
+    image: r.image,
   };
 }
 //this method fetches from remote api if there is no sql database available
@@ -253,7 +252,7 @@ async function loadFromRemoteAndSetState() {
       description: it.description || '',
       price: `$${(typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0)}`,
         category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-    image: getImageUrl(it.image) || require('../assets/images/placeholder.png'),
+    image: it.image,
     }));
     setMenuData(ui);
     setLoadedFrom("Remote API");

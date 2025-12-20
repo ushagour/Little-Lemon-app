@@ -8,12 +8,16 @@ const AppTextInput = ({
   keyboardType = 'default',
   autoCapitalize = 'sentences',
   styleInput,
+  inputStyle,
   accessibilityLabel,
+  multiline = false,
+  numberOfLines = 1,
+  editable = true,
   ...rest
 }) => {
   return (
     <RNTextInput
-      style={[styles.input, styleInput]}
+      style={[styles.input, styleInput || inputStyle, multiline && styles.multilineInput]}
       placeholder={placeholder}
       placeholderTextColor={'#9AA0A6'}
       value={value}
@@ -21,6 +25,9 @@ const AppTextInput = ({
       keyboardType={keyboardType}
       autoCapitalize={autoCapitalize}
       accessibilityLabel={accessibilityLabel}
+      multiline={multiline}
+      numberOfLines={numberOfLines}
+      editable={editable}
       {...rest}
     />
   );
@@ -40,6 +47,11 @@ const styles = StyleSheet.create({
     color: colors.textPrimary || '#333',
     fontFamily: 'Karla-Regular',
     fontSize: 14,
+  },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 12,
   },
 });
 

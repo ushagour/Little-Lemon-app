@@ -234,7 +234,7 @@ function mapRowToUI(r, idx = 0) {
     id: r.id ? String(r.id) : String(idx + 1),
     name: r.name || 'Untitled',
     description: r.description || '',
-    price: r.price ? `$${r.price}` : '$0.00',
+    price: (typeof r.price === 'number' ? r.price : parseFloat(r.price) || 0).toFixed(2),
     category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',//capitalization handled in filter
     image: r.image,
   };
@@ -250,8 +250,8 @@ async function loadFromRemoteAndSetState() {
       id: it.id ? String(it.id) : String(idx + 1),
       title: it.name || it.title || 'Untitled',
       description: it.description || '',
-      price: `$${(typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0)}`,
-        category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+    price: (typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0).toFixed(2),
+      category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
     image: it.image,
     }));
     setMenuData(ui);

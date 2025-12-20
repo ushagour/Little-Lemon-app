@@ -1,0 +1,298 @@
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, Text, View, Image, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions,FlatList, Alert } from 'react-native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Header from '../components/Header';
+import colors from '../config/colors';
+import { getImageUrl } from '../api/getImageUrl';
+import AppButton from '../components/Forms/AppButton';
+import Ligne from '../components/ui/Ligne';
+import AppCheckbox from '../components/Forms/AppCheckbox';
+import { useCart } from '../hooks/useCart';
+const { width } = Dimensions.get('window');
+const isTablet = width >= 768;
+
+const DetailScreen = ({ navigation, route }) => {
+  const { addToCart } = useCart();
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [selectedExtras, setSelectedExtras] = useState([]);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const item = useMemo(() => {
+    const params = route?.params || {};
+    // Expect either { item } or individual fields
+    return params.item || {
+      id: params.id,
+      name: params.name,
+      description: params.description,
+      price:params.price,
+      category: params.category,
+      image: params.image,
+    };
+  }, [route]);
+
+
+
+   
+   
+  const extrasOptions = [
+    { id: 1, label: 'Extra Cheese', price: 1.00 },
+    { id: 2, label: 'Spicy Sauce', price: 0.50 },
+    { id: 3, label: 'Gluten Free', price: 1.50 }
+  ];
+
+
+
+  
+  const basePrice = parseFloat(item.price) || 0;
+  const extrasPrice = selectedExtras.reduce((sum, extra) => sum + parseFloat(extra.price || 0), 0);
+  const subtotal = basePrice + extrasPrice;
+  const TOTAL = subtotal * parseFloat(quantity || 1);  
+  
+
+  const heroUrl = item?.image ? getImageUrl(item.image) : null;
+  const validUrl = heroUrl && (heroUrl.startsWith('http://') || heroUrl.startsWith('https://'));
+
+  return (
+    <View style={styles.container}>
+      <Header
+        onLeftPress={() => navigation.goBack()}
+        leftContent={
+          <Ionicons name="arrow-back" size={24} color={colors.white} />
+        }
+      />
+
+      <ScrollView contentContainerStyle={styles.scroll}>
+
+        {/* Hero image */}
+        <View style={styles.heroWrap}>
+          {!validUrl || !imageError ? (
+            <>
+              {imageLoading && (
+                <ActivityIndicator size="small" color={colors.primary2} style={styles.loadingSpinner} />
+              )}
+              <Image
+                source={{ uri: heroUrl }}
+                style={styles.heroImage}
+                onLoad={() => setImageLoading(false)}
+                onError={() => {
+                  setImageLoading(false);
+                  setImageError(true);
+                }}
+                accessible={true}
+                accessibilityLabel={`${item?.name ?? 'Menu'} image`}
+              />
+              {imageError && (
+                <View style={styles.imageFallback}>
+                  <MaterialIcons name="image-not-supported" size={28} color={colors.primary1} />
+                  <Text style={styles.fallbackText}>Image unavailable</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.imageFallback}>
+              <MaterialIcons name="no-photography" size={28} color={colors.primary1} />
+              <Text style={styles.fallbackText}>No image available</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Info */}
+        <View style={styles.content}>
+          <Text style={styles.title}>{item?.name ?? 'Menu Item'}</Text>
+
+       
+
+          {item?.description ? (
+            <Text style={styles.description}>{item.description}</Text>
+          ) : null}
+
+        </View>
+           <View style={styles.metaRow}>
+            <Ionicons name="bicycle" style={styles.logo}  size={20} color={colors.primary1} />
+        {/* <Image style={styles.logo} source={require("../assets/images/Delivery van.png")} /> */}
+        <Text style={styles.SmallText}>Delivery time : </Text>
+     
+          <Text style={styles.textBold}>20 minutes</Text>
+
+          <AppButton title="remove" 
+          
+            buttonStyle={{ flex:"end", marginLeft: 40, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.secondary2 }}
+            textStyle={styles.tagText}  />
+          </View>
+        <View style={styles.metaRow}>
+          <View style={{flex: 1}}>
+            {extrasOptions.map((extra, index) => (
+              <React.Fragment key={extra.id}>
+                {index > 0 && <Ligne />}
+                <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8}}>
+                  <Text style={[styles.SmallText]}>{extra.label}</Text>
+                  
+                  <AppCheckbox 
+                    label={`$${extra.price.toFixed(2)}`}
+                    onChange={(isSelected) => {
+                      if (isSelected) {
+                        setSelectedExtras([...selectedExtras, extra]);
+                      } else {
+                        setSelectedExtras(selectedExtras.filter(e => e.id !== extra.id));
+                      }
+                    }}
+                  />
+                </View>
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+        <Ligne style={{ marginVertical: 16 }} />
+
+        {/* Quantity Control */}
+        <View style={styles.quantitySection}>
+          <Text style={styles.SmallText}>Quantity</Text>
+          <View style={styles.quantityControls}>
+            <TouchableOpacity
+              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              style={styles.quantityButton}
+            >
+              <Text style={styles.quantityButtonText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.quantityValue}>{quantity}</Text>
+            <TouchableOpacity
+              onPress={() => setQuantity(quantity + 1)}
+              style={styles.quantityButton}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Ligne style={{ marginVertical: 16 }} />
+
+            <View style={styles.TotalRow}  >
+                  <Text style={[styles.SmallText]}>TOTAL</Text>
+                  <Text style={[styles.price]}>${TOTAL}</Text>
+           </View>
+              
+        <View style={styles.metaRow}>
+          <AppButton 
+            title={isAdding ? 'Adding to Cart...' : `Add to Cart for $${TOTAL.toFixed(2)}`}
+            color="primary2"
+            buttonStyle={{width: "80%",alignItems: "center",fontFamily: "Karla-Bold"}}
+            disabled={isAdding}
+            onPress={async () => {
+              setIsAdding(true);
+              try {
+                const success = await addToCart(item, selectedExtras, quantity);
+                if (success) {
+                  Alert.alert('Success', 'Item added to cart!', [
+                    {
+                      text: 'Continue Shopping',
+                      onPress: () => navigation.goBack(),
+                    },
+                    {
+                      text: 'Go to Checkout',
+                      onPress: () => navigation.navigate('Checkout'),
+                    },
+                  ]);
+                } else {
+                  Alert.alert('Error', 'Failed to add item to cart');
+                }
+              } catch (error) {
+                Alert.alert('Error', 'An unexpected error occurred');
+              } finally {
+                setIsAdding(false);
+              }
+            }}
+          />
+        </View> 
+
+      </ScrollView>
+    </View>
+  );
+};
+
+export default DetailScreen;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.secondary4 },
+  scroll: { paddingBottom: 24 },
+  heroWrap: {
+    width: '100%',
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: isTablet ? 24 : 16,
+  },
+  heroImage: {
+    width: isTablet ? Math.min(700, width - 48) : width - 32,
+    height: isTablet ? 320 : 220,
+    borderRadius: 12,
+    resizeMode: 'cover',
+    backgroundColor: '#F5F5F5',
+  },
+  loadingSpinner: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  imageFallback: {
+    width: isTablet ? Math.min(700, width - 48) : width - 32,
+    height: isTablet ? 320 : 220,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fallbackText: { fontSize: 12, color: '#888', marginTop: 6 },
+  content: { paddingHorizontal: 16, paddingTop: 12 },
+  title: { fontSize: isTablet ? 24 : 20, fontFamily: 'Karla-Bold', color: colors.textPrimary },
+  metaRow: {  paddingHorizontal: 18, paddingTop: 15, flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 12 },
+  TotalRow: {  paddingHorizontal: 18, paddingTop: 15, flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 12 
+,flexDirection: "row", justifyContent: "space-between", marginBottom: 8
+  },
+  tag: { backgroundColor: colors.secondary2, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16 },
+  tagText: { color: colors.secondary4, fontFamily: 'Karla-Medium' },
+  price: { color: colors.secondary1, fontFamily: 'Karla-Bold', fontSize: isTablet ? 18 : 16 },
+  description: { color: colors.black, marginTop: 12, lineHeight: 20, fontFamily: 'Karla-Regular' },
+  footerButton: { display: 'flex', alignItems: 'center', marginTop: 24 , paddingHorizontal: 16, marginBottom: 12  },
+  logo: {
+    width: 20,
+    height: 20, 
+    margin: 8,          
+  },
+  SmallText: {  fontSize: 14, color: colors.textPrimary, marginRight: 4, fontFamily: 'Karla-Medium' },
+  textBold: { fontSize: 14, color: colors.textPrimary, fontFamily: 'Karla-Bold' },
+  quantitySection: {
+    paddingHorizontal: 18,
+    paddingTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.secondary4,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+  },
+  quantityButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    fontFamily: 'Karla-Bold',
+    color: colors.primary1,
+  },
+  quantityValue: {
+    fontSize: 14,
+    fontFamily: 'Karla-Bold',
+    marginHorizontal: 12,
+    color: colors.textPrimary,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+});

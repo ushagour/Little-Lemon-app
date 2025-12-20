@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, View, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity, Platform, Dimensions, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../config/colors';
 import { useAuth } from '../hooks/useAuth';
@@ -21,12 +21,14 @@ const isTablet = width >= 768;
  * - leftContent: optional React node for left side (e.g., back button)
  * - rightContent: optional React node for right side (overrides default avatar)
  * - onRightPress: handler for right area tap
+ * - title: optional title to display in center instead of logo
  */
 const Header = ({ 
   onLeftPress = null, 
   leftContent = null, 
   rightContent = null, 
-  onRightPress = null 
+  onRightPress = null,
+  title = null
 }) => {
   const { isUserOnboarded } = useAuth();
   const insets = useSafeAreaInsets();
@@ -70,15 +72,20 @@ const Header = ({
         )}
       </View>
 
-      <View style={styles.center} pointerEvents="none">
-        <Image 
-          source={require('../assets/images/Logo.png')} 
-          style={styles.logo} 
-          resizeMode="contain"
-          accessible={true}
-          accessibilityLabel="Little Lemon logo"
-        />
-      </View>
+      <View style={styles.center} pointerEvents={title ? "auto" : "none"}>
+        {title ? (
+          <Text style={styles.title}>{title}</Text>
+        ) : (
+          <Image 
+            source={require('../assets/images/Logo.png')} 
+            style={styles.logo} 
+            resizeMode="contain"
+            accessible={true}
+            accessibilityLabel="Little Lemon logo"
+          />
+        )}
+      {/* </View>      */}
+       </View>
 
       <View style={styles.side}>
         {rightNode ? (
@@ -146,5 +153,10 @@ const styles = StyleSheet.create({
   sidePlaceholder: {
     width: 44,
     height: 44,
+  },
+  title: {
+    fontSize: isTablet ? 20 : 18,
+    fontFamily: 'Karla-Bold',
+    color: colors.textPrimary,
   },
 });

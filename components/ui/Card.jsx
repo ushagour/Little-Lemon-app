@@ -4,6 +4,7 @@ import { Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../../config/colors';
 import { getImageUrl } from '../../api/getImageUrl';
+import { useNavigation } from '@react-navigation/native';
 
 
 const { width } = Dimensions.get('window');
@@ -19,6 +20,7 @@ const isTablet = width >= 768;
  * - Accessibility support
  */
 const Card = ({ item }) => {
+  const navigation = useNavigation();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
@@ -35,7 +37,12 @@ const Card = ({ item }) => {
   const imageSize = isTablet ? 90 : 70;
   const isValidUrl = getImageUrl(item.image) && (getImageUrl(item.image).startsWith('https://') || getImageUrl(item.image).startsWith('https://'));
   return (
-    <View style={styles.card} testID={`card-${item.name}`}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('Details', { item })}
+      activeOpacity={0.8}
+      testID={`card-${item.name}`}
+    >
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
           {item.name}
@@ -75,7 +82,7 @@ const Card = ({ item }) => {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -6,6 +6,8 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SplashScreen from '../screens/SplashScreen';
 import HomeScreen from '../screens/Home';
+import DetailScreen from '../screens/DetailScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 import { useAuth } from '../hooks/useAuth';
 
 
@@ -32,6 +34,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Details" component={DetailScreen} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { useFonts } from './hooks/useFonts';
 import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 
 
 export default function App() {
@@ -29,9 +30,11 @@ export default function App() {
       <View  style={{ flex: 1 }}>
         <StatusBar style="light" />
         <AuthProvider>
-          <SQLiteProvider databaseName="little_lemon.db">
-            <AppNavigator />
-          </SQLiteProvider>
+          <CartProvider>
+            <SQLiteProvider databaseName="little_lemon.db">
+              <AppNavigator />
+            </SQLiteProvider>
+          </CartProvider>
         </AuthProvider>
       </View>
     </SafeAreaProvider>

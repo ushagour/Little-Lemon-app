@@ -121,6 +121,8 @@ const DetailScreen = ({ navigation, route }) => {
             buttonStyle={{ flex:"end", marginLeft: 40, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.secondary2 }}
             textStyle={styles.tagText}  />
           </View>
+
+          <View style={styles.metaRows}>
         <View style={styles.metaRow}>
           <View style={{flex: 1}}>
             {extrasOptions.map((extra, index) => (
@@ -130,9 +132,12 @@ const DetailScreen = ({ navigation, route }) => {
                   <Text style={[styles.SmallText]}>{extra.label}</Text>
                   
                   <AppCheckbox 
+                    checked={selectedExtras.some(e => e.id === extra.id)}
                     label={`$${extra.price.toFixed(2)}`}
                     onChange={(isSelected) => {
+
                       if (isSelected) {
+                        
                         setSelectedExtras([...selectedExtras, extra]);
                       } else {
                         setSelectedExtras(selectedExtras.filter(e => e.id !== extra.id));
@@ -170,7 +175,7 @@ const DetailScreen = ({ navigation, route }) => {
 
             <View style={styles.TotalRow}  >
                   <Text style={[styles.SmallText]}>TOTAL</Text>
-                  <Text style={[styles.price]}>${TOTAL}</Text>
+                  <Text style={[styles.price]}>${TOTAL.toFixed(2)}</Text>
            </View>
               
         <View style={styles.metaRow}>
@@ -186,10 +191,12 @@ const DetailScreen = ({ navigation, route }) => {
                 if (success) {
                   Alert.alert('Success', 'Item added to cart!', [
                     {
+                      color: colors.primary1,
                       text: 'Continue Shopping',
                       onPress: () => navigation.goBack(),
                     },
                     {
+                       color: colors.primary2,
                       text: 'Go to Checkout',
                       onPress: () => navigation.navigate('Checkout'),
                     },
@@ -204,6 +211,7 @@ const DetailScreen = ({ navigation, route }) => {
               }
             }}
           />
+        </View> 
         </View> 
 
       </ScrollView>
@@ -247,8 +255,9 @@ const styles = StyleSheet.create({
   fallbackText: { fontSize: 12, color: '#888', marginTop: 6 },
   content: { paddingHorizontal: 16, paddingTop: 12 },
   title: { fontSize: isTablet ? 24 : 20, fontFamily: 'Karla-Bold', color: colors.textPrimary },
-  metaRow: {  paddingHorizontal: 18, paddingTop: 15, flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 12 },
-  TotalRow: {  paddingHorizontal: 18, paddingTop: 15, flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 12 
+  metaRows: { backgroundColor: colors.white, marginTop: 16, paddingTop: 12 },
+  metaRow: {  paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 12 },
+  TotalRow: {  paddingHorizontal: 16,  flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginTop: 8 
 ,flexDirection: "row", justifyContent: "space-between", marginBottom: 8
   },
   tag: { backgroundColor: colors.secondary2, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16 },

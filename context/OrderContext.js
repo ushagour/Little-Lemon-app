@@ -1,0 +1,124 @@
+import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const OrderContext = createContext();
+
+export const OrderProvider = ({ children }) => {
+  const ORDERS_KEY = '@littlelemon_orders';
+  const [orders, setOrders] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load orders from AsyncStorage on mount
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  // Update unread count whenever orders change
+  useEffect(() => {
+    const unread = orders.filter(order => !order.read).length;
+    setUnreadCount(unread);
+  }, [orders]);
+
+  const loadOrders = async () => {
+    try {
+      const json = await AsyncStorage.getItem(ORDERS_KEY);
+      if (json) {
+        const data = JSON.parse(json);
+        setOrders(data);
+      }
+    } catch (e) {
+      console.log('Error loading orders from storage:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add a new order
+  const addOrder = async (orderDetails) => {
+    try {
+      const newOrder = {
+        id: `order_${Date.now()}`,
+        ...orderDetails,
+        date: new Date().toISOString(),
+        status: 'placed',
+        read: false, // Mark as unread notification
+      };
+
+      const updatedOrders = [newOrder, ...orders];
+      setOrders(updatedOrders);
+      await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+      return newOrder;
+    } catch (e) {
+      console.log('Error adding order:', e);
+      return null;
+    }
+  };
+
+  // Mark order as read
+  const markOrderAsRead = async (orderId) => {
+    try {
+      const updatedOrders = orders.map(order =>
+        order.id === orderId ? { ...order, read: true } : order
+      );
+      setOrders(updatedOrders);
+      await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+      return true;
+    } catch (e) {
+      console.log('Error marking order as read:', e);
+      return false;
+    }
+  };
+
+  // Mark all orders as read
+  const markAllAsRead = async () => {
+    try {
+      const updatedOrders = orders.map(order => ({ ...order, read: true }));
+      setOrders(updatedOrders);
+      await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+      return true;
+    } catch (e) {
+      console.log('Error marking all orders as read:', e);
+      return false;
+    }
+  };
+
+  // Update order status
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const updatedOrders = orders.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      );
+      setOrders(updatedOrders);
+      await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+      return true;
+    } catch (e) {
+      console.log('Error updating order status:', e);
+      return false;
+    }
+  };
+
+  // Get all orders
+  const getOrders = () => orders;
+
+  // Get unread orders
+  const getUnreadOrders = () => orders.filter(order => !order.read);
+
+  const value = {
+    orders,
+    unreadCount,
+    isLoading,
+    addOrder,
+    markOrderAsRead,
+    markAllAsRead,
+    updateOrderStatus,
+    getOrders,
+    getUnreadOrders,
+  };
+
+  return (
+    <OrderContext.Provider value={value}>
+      {children}
+    </OrderContext.Provider>
+  );
+};

@@ -91,7 +91,6 @@ const Header = ({
         {rightNode ? (
           <TouchableOpacity 
             onPress={onRightPress} 
-            style={styles.sideButton} 
             disabled={!onRightPress}
             activeOpacity={0.7}
             accessible={true}
@@ -139,6 +138,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor:colors.primary1,
+    borderRadius: 22,
   },
   center: {
     flex: 1,

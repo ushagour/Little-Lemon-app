@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Alert } from 'react-native';
+import { StyleSheet, Text, View, Alert,Image } from 'react-native';
 import TextInput from '../components/Forms/AppTextInput';
 import Header from "../components/Header";
 import Footer from '../components/Footer';
@@ -47,13 +47,28 @@ const OnboardingScreen = ({ navigation, route }) => {
    <View style={styles.container}>
       {/* Header */}
           <Header />
-      <Hero />
+          <Hero />
 
       {/* Content */}
 
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
 
+
+
+
+          <View style={styles.wrapper}>
+
+          <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 10, color: colors.textPrimary }}>
+            Let's get to know you
+          </Text>
+          <Image
+            source={require('../assets/images/small_logo.png')}
+            style={{  width: 50, height: 50, marginBottom: 20 }}
+          />
+          
+
+          </View>
           <Label  text="Name" required={true} />
           <AppTextInput
             style={[styles.input, !nameIsValid && firstName.length > 0 ? styles.inputError : null]}
@@ -129,5 +144,9 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginTop: 5,
     marginBottom: 15,
+  },
+  wrapper: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
 });

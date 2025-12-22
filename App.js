@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { useFonts } from './hooks/useFonts';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { OrderProvider } from './context/OrderContext';
 
 
 export default function App() {
@@ -30,11 +31,13 @@ export default function App() {
       <View  style={{ flex: 1 }}>
         <StatusBar style="light" />
         <AuthProvider>
-          <CartProvider>
-            <SQLiteProvider databaseName="little_lemon.db">
-              <AppNavigator />
-            </SQLiteProvider>
-          </CartProvider>
+          <OrderProvider>
+            <CartProvider>
+              <SQLiteProvider databaseName="little_lemon.db">
+                <AppNavigator />
+              </SQLiteProvider>
+            </CartProvider>
+          </OrderProvider>
         </AuthProvider>
       </View>
     </SafeAreaProvider>

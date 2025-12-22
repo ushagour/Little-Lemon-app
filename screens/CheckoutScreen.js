@@ -17,12 +17,14 @@ import AppButton from '../components/Forms/AppButton';
 import Ligne from '../components/ui/Ligne';
 import AppTextInput from '../components/Forms/AppTextInput';
 import { useCart } from '../hooks/useCart';
+import { useOrders } from '../hooks/useOrders';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
 const CheckoutScreen = ({ navigation }) => {
   const { cartItems, subtotal, tax, total, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { addOrder } = useOrders();
   const [isProcessing, setIsProcessing] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -63,10 +65,22 @@ const CheckoutScreen = ({ navigation }) => {
       // Simulate API call for order placement
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      // Create order notification
+      const orderData = {
+        items: cartItems,
+        subtotal,
+        tax,
+        total,
+        deliveryAddress,
+        phoneNumber,
+        specialInstructions,
+      };
+      await addOrder(orderData);
+
       // Order placed successfully
       Alert.alert(
         'Order Placed Successfully!',
-        `Your order total is $${total}.\n\nDelivery to: ${deliveryAddress}`,
+        `Your order total is $${total.toFixed(2)}.\n\nDelivery to: ${deliveryAddress}\n\nCheck your notifications on the profile button for updates!`,
         [
           {
             text: 'OK',
@@ -180,14 +194,14 @@ const CheckoutScreen = ({ navigation }) => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax (10%)</Text>
-            <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text> {/* // we used to fix just to show 2 decimal places */}
-          </View>
+            <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text> 
+                     </View>
 
           <Ligne style={{ marginVertical: 8 }} />
 
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>${total}</Text>
+            <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
           </View>
         </View>
 

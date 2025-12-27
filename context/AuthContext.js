@@ -34,8 +34,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     
-  // Update user profile in AsyncStorage and state
+  // Update user profile in AsyncStorage and state (only for registered users, not guests)
   const updateUser = async (userData) => {
+    // Don't save guest users to AsyncStorage
+    if (userData?.isGuest) {
+      setUser(userData);
+      return true;
+    }
     try {
       await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(userData));
       setUser(userData);
@@ -53,6 +58,7 @@ export const AuthProvider = ({ children }) => {
         ...(user || {}),
         ...(profileData || {}),
         isUserOnboarded: true,
+        isGuest: false, // Mark as registered user, not guest
       };
       await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);
@@ -61,6 +67,15 @@ export const AuthProvider = ({ children }) => {
       console.log('Error completing onboarding:', e);
       return false;
     }
+  };
+
+  // Create a guest user without saving to AsyncStorage
+  const createGuestUser = () => {
+    const guestUser = {
+      isGuest: true,
+      isUserOnboarded: false,
+    };
+    setUser(guestUser);
   };
 
   // Clear user (logout)
@@ -77,12 +92,43 @@ export const AuthProvider = ({ children }) => {
 
 
 
+  const login = async (userData) => {
+    try {
+      await completeOnboarding(userData);
+      return true;
+    } catch (e) {
+      console.log('Error saving user to storage:', e);
+      return false;
+    }
+  };
+
+  const SignUp = async (userData) => {  
+
+    try {
+      await completeOnboarding(userData);
+      return true;
+    }
+    catch (e) {
+      console.log('Error saving user to storage:', e);
+      return false;
+    }
+  };
+
+
+
+
+
+
   const value = {
     user,
     isLoading,
+    login,
+    SignUp,
     updateUser,
     completeOnboarding,
     isUserOnboarded: Boolean(user?.isUserOnboarded),
+    isGuest: Boolean(user?.isGuest),
+    createGuestUser,
     logout,
   };
 

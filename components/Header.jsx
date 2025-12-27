@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../config/colors';
 import { useAuth } from '../hooks/useAuth';
 import Avatar from './ui/Avatar';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -30,11 +31,13 @@ const Header = ({
   onRightPress = null,
   title = null
 }) => {
-  const { isUserOnboarded } = useAuth();
+  const { user, isGuest } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Only show avatar/profile button when user has completed onboarding
-  const rightNode = rightContent ?? (isUserOnboarded ? <Avatar /> : null);
+  const rightNode = rightContent ?? (user ? <Avatar /> : null  );
+  
+
 
   // Dynamic header height based on device and safe area
   const headerHeight = Platform.select({
@@ -101,8 +104,9 @@ const Header = ({
             {rightNode}
           </TouchableOpacity>
         ) : (
-          <View style={styles.sidePlaceholder} />
-        )}
+null        )}
+
+     
       </View>
     </View>
   );

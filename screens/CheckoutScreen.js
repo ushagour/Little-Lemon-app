@@ -18,6 +18,7 @@ import Ligne from '../components/ui/Ligne';
 import AppTextInput from '../components/Forms/AppTextInput';
 import { useCart } from '../hooks/useCart';
 import { useOrders } from '../hooks/useOrders';
+import { useAuth } from '../hooks/useAuth';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -25,6 +26,7 @@ const isTablet = width >= 768;
 const CheckoutScreen = ({ navigation }) => {
   const { cartItems, subtotal, tax, total, removeFromCart, updateQuantity, clearCart } = useCart();
   const { addOrder } = useOrders();
+  const { isGuest } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -45,6 +47,22 @@ const CheckoutScreen = ({ navigation }) => {
   };
 
   const handlePlaceOrder = async () => {
+    // Check if user is guest - prevent checkout
+    if (isGuest) {
+      Alert.alert(
+        'Registration Required',
+        'Please complete your registration to place an order.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Register Now',
+            onPress: () => navigation.navigate('Onboarding'),
+          },
+        ]
+      );
+      return;
+    }
+
     // Validation
     if (!deliveryAddress.trim()) {
       Alert.alert('Missing Information', 'Please enter a delivery address');
@@ -150,6 +168,7 @@ const CheckoutScreen = ({ navigation }) => {
           <Ionicons name="cart-outline" size={64} color={colors.secondary5} />
           <Text style={styles.emptyTitle}>Your Cart is Empty</Text>
           <Text style={styles.emptyDescription}>Add items to your order to continue</Text>
+          
           <AppButton
             title="Continue Shopping"
             color="primary2"
@@ -189,7 +208,7 @@ const CheckoutScreen = ({ navigation }) => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${subtotal}</Text>
+            <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
           </View>
 
           <View style={styles.summaryRow}>

@@ -9,10 +9,12 @@ import { MaskedTextInput } from 'react-native-mask-text';
 import Header from '../components/Header';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
+import IsAuthWrapper from '../components/ui/IsAuthWrapper';
+import NotificationCard from '../components/ui/NotificationCard';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, updateUser, logout } = useAuth();
-  const { orders, markOrderAsRead, markAllAsRead, unreadCount } = useOrders();
+  const { user, updateUser, logout, isGuest } = useAuth();
+  const { orders } = useOrders();
 
   const [profile, setProfile] = useState({
     firstName: '',
@@ -100,6 +102,27 @@ const ProfileScreen = ({ navigation }) => {
   const initials = `${(profile.firstName?.[0] || '').toUpperCase()}${(profile.lastName?.[0] || '').toUpperCase()}`;
   const hasData = Boolean(profile.firstName || profile.email);
 
+  // For guest users, show a message requiring registration to complete ordering
+  if (isGuest) {
+    return (
+      <View style={styles.container}>
+        <Header
+          leftContent={
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          }
+        />
+        <View style={styles.ProfileWrapper}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.ProfileWrapperTitle}>Guest User</Text>
+            <IsAuthWrapper navigation={navigation} />
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
+
   const save = async () => {
     const toSave = { ...profile, isUserOnboarded: user?.isUserOnboarded === true };
     const success = await updateUser(toSave);
@@ -135,47 +158,7 @@ const ProfileScreen = ({ navigation }) => {
           
           {/* Order Notifications Section */}
           {orders.length > 0 && (
-            <View style={styles.notificationSection}>
-              <View style={styles.notificationHeader}>
-                <Text style={styles.ProfileWrapperTitle}>Order Notifications</Text>
-                {unreadCount > 0 && (
-                  <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-                    <Text style={styles.markAllText}>Mark all as read</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              
-              {orders.slice(0, 5).map((order) => (
-                <TouchableOpacity 
-                  key={order.id} 
-                  style={[
-                    styles.notificationItem,
-                    !order.read && styles.unreadNotification
-                  ]}
-                  onPress={() => markOrderAsRead(order.id)}
-                >
-                  <View style={styles.notificationIcon}>
-                    <Ionicons 
-                      name={order.read ? "checkmark-circle" : "notifications"} 
-                      size={24} 
-                      color={order.read ? colors.primary1 : '#FF6B6B'} 
-                    />
-                  </View>
-                  <View style={styles.notificationContent}>
-                    <Text style={styles.notificationTitle}>
-                      Order {order.status === 'placed' ? 'Placed' : 'Updated'}
-                      {!order.read && <Text style={styles.newBadge}> • NEW</Text>}
-                    </Text>
-                    <Text style={styles.notificationDescription}>
-                      {order.items.length} item(s) - ${order.total.toFixed(2)}
-                    </Text>
-                    <Text style={styles.notificationTime}>
-                      {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+         <NotificationCard  />
           )}
 
           <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
@@ -277,7 +260,15 @@ const ProfileScreen = ({ navigation }) => {
           </View>
 
           <AppButton title="logout" onPress={handelLogout} color="primary2" buttonStyle={styles.LogoutButton} textStyle={styles.TextButtons} />
-
+          
+          <AppButton 
+            title="Change Password" 
+            onPress={() => navigation.navigate('ChangePassword')} 
+            color="danger"
+            buttonStyle={styles.changePasswordButton} 
+            textStyle={[styles.TextButtons, { color: colors.white }]} 
+          />
+          
           <View style={styles.footerWrapper}>
             <AppButton
               title="Discard Changes"
@@ -292,8 +283,9 @@ const ProfileScreen = ({ navigation }) => {
               color="primary1"
               disabled={!phoneIsValid}
               textStyle={[styles.TextButtons, { color: colors.white }]}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
             />
-          </View>
+          </View>          
         </ScrollView>
       </View>
     </View>
@@ -347,7 +339,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   ProfileWrapper: {
-    flex: 2,
+    flex: 1,
     width: '100%',
     backgroundColor: colors.white,
     padding: 16,
@@ -444,6 +436,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  changePasswordButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#DC3545',
+  },
   saveButton: {
     marginTop: 12,
     alignSelf: 'flex-start',
@@ -472,65 +475,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  notificationSection: {
-    marginBottom: 24,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    padding: 12,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  markAllButton: {
-    padding: 6,
-  },
-  markAllText: {
-    color: colors.primary1,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  notificationItem: {
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  unreadNotification: {
-    backgroundColor: '#FFF8F0',
-    borderColor: '#FF6B6B',
-    borderWidth: 2,
-  },
-  notificationIcon: {
-    marginRight: 12,
-    justifyContent: 'center',
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  newBadge: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  notificationDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: '#999',
-  },
+  
+ 
 });

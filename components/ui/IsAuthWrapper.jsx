@@ -16,12 +16,14 @@ const IsAuthWrapper = ({ navigation }) => {
                 <AppButton 
                   title="Sign In"
                   color="primary1"
+                  textStyle={{ color: colors.white }}
                   buttonStyle={{ flex: 1, marginRight: 8 }}
                   onPress={() => navigation.navigate('Login')}
                 />
                 <AppButton 
                   title="Register"
                   color="primary2"
+                  textStyle={{ color: colors.black }}
                   buttonStyle={{ flex: 1, marginLeft: 8 }}
                   onPress={() => navigation.navigate('Register')}
                 />

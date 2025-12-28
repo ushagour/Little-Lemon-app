@@ -124,10 +124,12 @@ const DetailScreen = ({ navigation, route }) => {
      
           <Text style={styles.textBold}>20 minutes</Text>
 
-          <AppButton title="remove" 
+          {/* To-Do: add this feature later  */}
+           {/* 
+           <AppButton title="remove" 
           
             buttonStyle={{ flex:"end", marginLeft: 40, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.secondary2 }}
-            textStyle={styles.tagText}  />
+            textStyle={styles.tagText}  /> */}
           </View>
 
           {/* Authentication Check - Show login prompt if not authenticated */}

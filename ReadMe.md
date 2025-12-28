@@ -7,7 +7,7 @@ A small React Native demo app for a restaurant-style onboarding and profile flow
 
 ## Scenario 
 
-![Logo](./screenshots/scenario1.png)
+![Logo](./App DOC/screenshots/scenario1.png)
 
 
 ## Features
@@ -108,23 +108,7 @@ Display UI, retry DB seeding in background
 
 ## Screenshots
 
-Logo / Splash
 
-![Logo](./screenshots/splash.png)
-
-Hero / Home (example)
-
-![Hero](./screenshots/Hero image.png)
-
-Profile (avatar & edit)
-
-![Profile](./screenshots/Profile.png)
-
-Food / content examples
-
-![Greek Salad](./screenshots/Greek salad.png)
-
-![Pasta](./screenshots/Pasta.png)
 
 ## Running
 

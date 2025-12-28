@@ -98,7 +98,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const phoneRaw = (profile.phone || '').replace(/\D/g, '');
-  const phoneIsValid = phoneRaw.length === 10;
+  const phoneIsValid = phoneRaw.length === 12; // +212 (3 digits) + 9 digits for Moroccan number
   const initials = `${(profile.firstName?.[0] || '').toUpperCase()}${(profile.lastName?.[0] || '').toUpperCase()}`;
   const hasData = Boolean(profile.firstName || profile.email);
 
@@ -135,12 +135,31 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handelLogout = async () => {
-    const success = await logout();
-    if (success) {
-      navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
-    } else {
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await logout();
+            if (success) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Onboarding' }],
+              });
+            } else{
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -218,16 +237,16 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             <View style={styles.inputRow}>
               <MaskedTextInput
-                mask="+1 (999) 999-9999"
+                mask="+212 [6-9]99 999-9999"
                 onChangeText={(masked) => setProfile((p) => ({ ...p, phone: masked }))}
-                placeholder="+1 (999) 999-9999"
+                placeholder="+212 600 000-0000"
                 style={[styles.input, { paddingVertical: 8, borderWidth: 1, borderColor: colors.primary1, backgroundColor: '#F5F5F5', paddingHorizontal: 12 }]}
                 keyboardType="phone-pad"
                 value={profile.phone}
               />
             </View>
 
-            {!phoneIsValid && phoneRaw.length > 0 ? <Text style={styles.errorText}>Enter a valid US phone number (10 digits).</Text> : null}
+            {!phoneIsValid && phoneRaw.length > 0 ? <Text style={styles.errorText}>Enter a valid Moroccan phone number (+212 + 9 digits).</Text> : null}
             {!hasData && <Text style={styles.noData}>No profile data provided.</Text>}
           </View>
 

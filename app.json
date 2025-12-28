@@ -1,14 +1,15 @@
 {
   "expo": {
-    "name": "Little-Lemon-app",
-    "slug": "Little-Lemon-app",
+    "name": "little-lemon-app",
+    "owner": "Ali OUCHAGOUR",
+    "slug": "little-lemon-app",
+    "description": "This application is a React Native Food App. Users will have to go through a registration process. Once they successfully complete that phase, they are redirected to a home screen where they can search and filter menu items. User can also change their preferences in Profile page",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Logo.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/Logo-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
       },
       "edgeToEdgeEnabled": true
     },

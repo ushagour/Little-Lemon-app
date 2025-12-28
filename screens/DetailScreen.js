@@ -8,11 +8,15 @@ import AppButton from '../components/Forms/AppButton';
 import Ligne from '../components/ui/Ligne';
 import AppCheckbox from '../components/Forms/AppCheckbox';
 import { useCart } from '../hooks/useCart';
+import { useAuth } from '../hooks/useAuth';
+import IsAuthWrapper from '../components/ui/IsAuthWrapper';
+
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
 const DetailScreen = ({ navigation, route }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [selectedExtras, setSelectedExtras] = useState([]);
@@ -54,6 +58,9 @@ const DetailScreen = ({ navigation, route }) => {
   const heroUrl = item?.image ? getImageUrl(item.image) : null;
   const validUrl = heroUrl && (heroUrl.startsWith('http://') || heroUrl.startsWith('https://'));
 
+  // Check if user is authenticated (not a guest and has completed onboarding)
+  const isAuthenticated = user && !user.isGuest && user.isUserOnboarded;
+
   return (
     <View style={styles.container}>
       <Header
@@ -61,6 +68,7 @@ const DetailScreen = ({ navigation, route }) => {
         leftContent={
           <Ionicons name="arrow-back" size={24} color={colors.white} />
         }
+        onRightPress={()=>navigation.navigate('Profile')}
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -122,6 +130,10 @@ const DetailScreen = ({ navigation, route }) => {
             textStyle={styles.tagText}  />
           </View>
 
+          {/* Authentication Check - Show login prompt if not authenticated */}
+          {!isAuthenticated ? (
+         <IsAuthWrapper navigation={navigation} />
+          ) : (
           <View style={styles.metaRows}>
         <View style={styles.metaRow}>
           <View style={{flex: 1}}>
@@ -190,16 +202,17 @@ const DetailScreen = ({ navigation, route }) => {
                 const success = await addToCart(item, selectedExtras, quantity);
                 if (success) {
                   Alert.alert('Success', 'Item added to cart!', [
+                        {
+                       color: colors.primary2,
+                      text: 'Go to Checkout',
+                      onPress: () => navigation.navigate('Checkout'),
+                    },
                     {
                       color: colors.primary1,
                       text: 'Continue Shopping',
                       onPress: () => navigation.goBack(),
                     },
-                    {
-                       color: colors.primary2,
-                      text: 'Go to Checkout',
-                      onPress: () => navigation.navigate('Checkout'),
-                    },
+                
                   ]);
                 } else {
                   Alert.alert('Error', 'Failed to add item to cart');
@@ -213,6 +226,7 @@ const DetailScreen = ({ navigation, route }) => {
           />
         </View> 
         </View> 
+          )}
 
       </ScrollView>
     </View>
@@ -303,5 +317,5 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     minWidth: 30,
     textAlign: 'center',
-  },
+  }
 });

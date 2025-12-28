@@ -29,7 +29,7 @@ const Card = ({ item }) => {
   };
 
   const handleImageError = (error) => {
-    console.warn(`Image failed to load for ${item.name}:`, item.image, error);
+    // console.warn(`Image failed to load for ${item.name}:`, item.image, error);
     setImageLoading(false);
     setImageError(true);
   };

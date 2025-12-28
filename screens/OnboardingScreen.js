@@ -1,112 +1,64 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Alert,Image } from 'react-native';
-import TextInput from '../components/Forms/AppTextInput';
+import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import Header from "../components/Header";
-import Footer from '../components/Footer';
 import colors from '../config/colors';
 import Hero from '../components/Hero';
-import Label from '../components/Forms/Label';
 import { ScrollView } from 'react-native-gesture-handler';
-import AppTextInput from '../components/Forms/AppTextInput';
+import AppButton from '../components/Forms/AppButton';
 import { useAuth } from '../hooks/useAuth';
 
-const OnboardingScreen = ({ navigation, route }) => {
-  const { completeOnboarding } = useAuth();
-  const [firstName, setFirstName] = useState('');
-  const [email, setEmail] = useState('');
+const OnboardingScreen = ({ navigation }) => {
+  const { createGuestUser } = useAuth();
 
-  // validity states
-  const [nameIsValid, setNameIsValid] = useState(false);
-  const [emailIsValid, setEmailIsValid] = useState(false);
-  const [formIsValid, setFormIsValid] = useState(false);
-
-  // Validate whenever inputs change. This approach centralizes validation
-  // logic and updates the derived `formIsValid` state which is passed to Footer.
-  useEffect(() => {
-    const trimmed = firstName.trim();
-    const nameValid = trimmed.length > 0 && /^[A-Za-z\s]+$/.test(trimmed);
-    setNameIsValid(nameValid);
-
-    const emailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    setEmailIsValid(emailValid);
-
-    setFormIsValid(nameValid && emailValid);
-  }, [firstName, email]);
-
-  // If the screen was opened with params (e.g. for editing), prefill the inputs.
-  useEffect(() => {
-    const params = route?.params || {};
-    if (params.firstName && !firstName) setFirstName(params.firstName);
-    if (params.email && !email) setEmail(params.email);
-  }, [route?.params]);
+  const handleContinueAsGuest = () => {
+    createGuestUser();
+    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+  };
 
 
   return (
-
-
-   <View style={styles.container}>
-      {/* Header */}
-          <Header />
-          <Hero />
-
-      {/* Content */}
-
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-
-
-
-
-
-          <View style={styles.wrapper}>
-
-          <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 10, color: colors.textPrimary }}>
-            Let's get to know you
-          </Text>
+    <View style={styles.container}>
+      <Hero />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.wrapper}>
+          <Text style={styles.title}>Welcome to Little Lemon</Text>
           <Image
-            source={require('../assets/images/small_logo.png')}
-            style={{  width: 50, height: 50, marginBottom: 20 }}
+            source={require('../assets/images/Logo.png')}
+            style={styles.logo}
           />
-          
+          <Text style={styles.subtitle}>
+            Discover delicious Mediterranean cuisine and enjoy a delightful dining experience.
+          </Text>
+        </View>
 
-          </View>
-          <Label  text="Name" required={true} />
-          <AppTextInput
-            style={[styles.input, !nameIsValid && firstName.length > 0 ? styles.inputError : null]}
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          {!nameIsValid && firstName.length > 0 ? (
-              <Text style={styles.errorText}>Please enter a valid name (letters and spaces only).</Text>
-            ) : null}
-
-
-          <Label  text="Email" required={true} />
-         <AppTextInput
-            style={[styles.input, !emailIsValid && email.length > 0 ? styles.inputError : null]}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
+        <View style={styles.buttonsContainer}>
+          <AppButton
+            title="Login"
+            onPress={() => navigation.navigate('Login')}
+            color="primary1"
+            buttonStyle={styles.button}
+            textStyle={styles.buttonText}
           />
 
+          <AppButton
+            title="Sign Up"
+            onPress={() => navigation.navigate('Register')}
+            color="primary2"
+            buttonStyle={styles.button}
+          />
 
-          {!emailIsValid && email.length > 0 ? (
-            <Text style={styles.errorText}>Please enter a valid email address.</Text>
-          ) : null}
+          <AppButton
+           onPress={handleContinueAsGuest}
+              title="Continue as Guest"
+              textStyle={styles.guestButtonText}
+              buttonStyle={styles.guestButton}
+            color=""
 
-        </ScrollView>
-
-      <Footer
-        formIsValid={formIsValid}
-        onPress={async () => {
-          const success = await completeOnboarding({ firstName, email });
-          if (success) {
-            navigation.navigate('Home');
-          } else {
-            Alert.alert('Error', 'Unable to complete onboarding. Please try again.');
-          }
-        }}
-      />
+          />
+        </View>
+      </ScrollView>
+      <View style={styles.copyright}>
+        <Text style={styles.copyrightText}>© 2026 Little Lemon. All rights reserved.</Text>
+      </View>
     </View>
   );
 };
@@ -116,37 +68,71 @@ export default OnboardingScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // take full screen height
+    flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     backgroundColor: colors.secondary5,
-  },
-    input: {
-    backgroundColor: colors.inputBackground || '#F5F5F5',
-    borderColor: colors.white,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 18,
-    color: colors.textPrimary || '#333',
-    fontFamily: 'Karla-Regular',
-    marginBottom: 15,
-  },
-
-
-  inputError: {
-    borderColor: colors.danger,
-  },
-  errorText: {  
-    color: colors.danger,
-    marginTop: 5,
-    marginBottom: 15,
+    justifyContent: 'center',
   },
   wrapper: {
     alignItems: 'center',
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
     marginBottom: 20,
+    color: colors.textPrimary,
+    fontFamily: 'MarkaziText-Medium',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  buttonsContainer: {
+    width: '100%',
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 6,
+  },
+  buttonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  guestButton: {
+    width: '100%',
+    // marginTop: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    fontFamily: 'Karla-Bold',
+    borderColor: colors.primary1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestButtonText: {
+    color: colors.primary1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  copyright: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: colors.white,
+  },
+  copyrightText: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

@@ -15,37 +15,6 @@ import ChangePassword from '../screens/Auth/ChangePassword';
 
 const Stack = createStackNavigator();
 
-// Auth Navigator - handles authentication related screens
-function AuthNavigator() {
-  return (
-    <Stack.Navigator 
-      initialRouteName="Onboarding" 
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-
-    </Stack.Navigator>
-  );
-}
-
-// Main App Navigator - handles main application screens
-function MainNavigator() {
-  return (
-    <Stack.Navigator 
-      initialRouteName="Home" 
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="ChangePassword" component={ChangePassword} />
-      <Stack.Screen name="Details" component={DetailScreen} />
-      <Stack.Screen name="Checkout" component={CheckoutScreen} />
-    </Stack.Navigator>
-  );
-}
-
 export default function AppNavigator() {
   const { isUserOnboarded, isLoading } = useAuth();
 
@@ -56,7 +25,22 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {isUserOnboarded ? <MainNavigator /> : <AuthNavigator />}
+      <Stack.Navigator 
+        initialRouteName={isUserOnboarded ? 'Home' : 'Onboarding'}
+        screenOptions={{ headerShown: false }}
+      >
+        {/* Auth Stack Screens */}
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+
+        {/* Main App Stack Screens */}
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="ChangePassword" component={ChangePassword} />
+        <Stack.Screen name="Details" component={DetailScreen} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

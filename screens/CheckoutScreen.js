@@ -185,6 +185,7 @@ const CheckoutScreen = ({ navigation }) => {
         onLeftPress={() => navigation.goBack()}
         leftContent={<Ionicons name="arrow-back" size={24} color={colors.white} />}
         title="Order Checkout"
+        onRightPress={()=>navigation.navigate('Profile')}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

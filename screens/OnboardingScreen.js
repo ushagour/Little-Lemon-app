@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+
   title: {
     fontSize: 32,
     fontWeight: '700',

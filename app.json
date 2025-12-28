@@ -32,7 +32,9 @@
         {
           "fonts": [
             "./assets/fonts/MarkaziText-Regular.ttf",
-            "./assets/fonts/Karla-Regular.ttf"
+            "./assets/fonts/Karla-Regular.ttf",
+            "./assets/fonts/MarkaziText-Medium.ttf",
+            "./assets/fonts/Karla-Bold.ttf"
           ]
         }
       ]

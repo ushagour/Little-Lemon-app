@@ -80,11 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
-  },
+
   title: {
     fontSize: 32,
     fontWeight: '700',

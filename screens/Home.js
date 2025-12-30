@@ -49,6 +49,7 @@ function Home({ navigation }) {
   const db = useSQLiteContext();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
+  const [remote, setRemote] = useState('https://raw.githubusercontent.com/ushagour/assets-files/main/little-lemon/assets/capstone.json'); // for debug/info
   
 
   const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
@@ -84,7 +85,7 @@ function Home({ navigation }) {
         }
 
         // 3) empty DB -> fetch remote, insert all, then load from DB
-        const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json');
+        const res = await fetch(remote);
         const json = await res.json();
         const items = Array.isArray(json) ? json : json.menu || [];
 
@@ -243,7 +244,7 @@ function mapRowToUI(r, idx = 0) {
 
 async function loadFromRemoteAndSetState() {
   try {
-    const res = await fetch('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json');
+    const res = await fetch(remote);
     const json = await res.json();
     const items = Array.isArray(json) ? json : json.menu || [];
     const ui = items.map((it, idx) => ({

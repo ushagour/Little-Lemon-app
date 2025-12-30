@@ -10,6 +10,7 @@ import AppCheckbox from '../components/Forms/AppCheckbox';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import IsAuthWrapper from '../components/ui/IsAuthWrapper';
+import { formatPriceMAD } from '../utils/currency';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -147,7 +148,7 @@ const DetailScreen = ({ navigation, route }) => {
                   
                   <AppCheckbox 
                     checked={selectedExtras.some(e => e.id === extra.id)}
-                    label={`$${extra.price.toFixed(2)}`}
+                    label={formatPriceMAD(extra.price)}
                     onChange={(isSelected) => {
 
                       if (isSelected) {
@@ -189,12 +190,12 @@ const DetailScreen = ({ navigation, route }) => {
 
             <View style={styles.TotalRow}  >
                   <Text style={[styles.SmallText]}>TOTAL</Text>
-                  <Text style={[styles.price]}>${TOTAL.toFixed(2)}</Text>
+                  <Text style={[styles.price]}>{formatPriceMAD(TOTAL)}</Text>
            </View>
               
         <View style={styles.metaRow}>
           <AppButton 
-            title={isAdding ? 'Adding to Cart...' : `Add to Cart for $${TOTAL.toFixed(2)}`}
+            title={isAdding ? 'Adding to Cart...' : `Add to Cart for ${formatPriceMAD(TOTAL)}`}
             color="primary2"
             buttonStyle={{width: "80%",alignItems: "center",fontFamily: "Karla-Bold"}}
             disabled={isAdding}

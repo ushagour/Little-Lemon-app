@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../../config/colors';
 import { getImageUrl } from '../../api/getImageUrl';
 import { useNavigation } from '@react-navigation/native';
+import { formatPriceMAD } from '../../utils/currency';
 
 
 const { width } = Dimensions.get('window');
@@ -50,7 +51,7 @@ const Card = ({ item }) => {
         <Text style={styles.cardDescription} numberOfLines={2} ellipsizeMode="tail">
           {item.description}
         </Text>
-        <Text style={styles.cardPrice}>{item.price}</Text>
+        <Text style={styles.cardPrice}>{formatPriceMAD(item.price)}</Text>
       </View>
 
       {/* Image with loading and error states */}

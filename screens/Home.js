@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import Header from '../components/Header';
 import colors from '../config/colors';
@@ -50,6 +51,7 @@ function Home({ navigation }) {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [remote, setRemote] = useState('https://raw.githubusercontent.com/ushagour/assets-files/main/little-lemon/assets/capstone.json'); // for debug/info
+  const [refreshing, setRefreshing] = useState(false);
   
 
   const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
@@ -135,7 +137,17 @@ function Home({ navigation }) {
     return matchesCategory;
   });
 
-
+const onRefresh = async () => {
+  setRefreshing(true);
+  try {
+    await loadFromRemoteAndSetState();  
+  } catch (e) {
+    console.error('Refresh error', e);
+  } finally {
+    setRefreshing(false);
+  }
+};
+    
 
   
 
@@ -184,6 +196,7 @@ function Home({ navigation }) {
         renderItem={({ item }) => <Card item={item} /> } 
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={SeparatorView}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
        />
     </View>
   );

@@ -19,6 +19,7 @@ import AppTextInput from '../components/Forms/AppTextInput';
 import { useCart } from '../hooks/useCart';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../hooks/useAuth';
+import { formatPriceMAD } from '../utils/currency';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -98,7 +99,7 @@ const CheckoutScreen = ({ navigation }) => {
       // Order placed successfully
       Alert.alert(
         'Order Placed Successfully!',
-        `Your order total is $${total.toFixed(2)}.\n\nDelivery to: ${deliveryAddress}\n\nCheck your notifications on the profile button for updates!`,
+        `Your order total is ${formatPriceMAD(total)}.\n\nDelivery to: ${deliveryAddress}\n\nCheck your notifications on the profile button for updates!`,
         [
           {
             text: 'OK',
@@ -126,7 +127,7 @@ const CheckoutScreen = ({ navigation }) => {
             Extras: {item.extras.map(e => e.label).join(', ')}
           </Text>
         )}
-        <Text style={styles.itemPrice}>${item.price}</Text>
+        <Text style={styles.itemPrice}>{formatPriceMAD(item.price)}</Text>
       </View>
 
       <View style={styles.quantityControl}>
@@ -146,7 +147,7 @@ const CheckoutScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.totalColumn}>
-        <Text style={styles.totalPrice}>${item.totalPrice}</Text>
+        <Text style={styles.totalPrice}>{formatPriceMAD(item.totalPrice)}</Text>
         <TouchableOpacity
           onPress={() => handleRemoveItem(item.cartId)}
           style={styles.deleteButton}
@@ -209,19 +210,19 @@ const CheckoutScreen = ({ navigation }) => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>{formatPriceMAD(subtotal)}</Text>
           </View>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax (10%)</Text>
-            <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text> 
+            <Text style={styles.summaryValue}>{formatPriceMAD(tax)}</Text> 
                      </View>
 
           <Ligne style={{ marginVertical: 8 }} />
 
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalAmount}>{formatPriceMAD(total)}</Text>
           </View>
         </View>
 

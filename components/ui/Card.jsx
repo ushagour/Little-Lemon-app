@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ActivityIndicator, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, Dimensions, useCallback, useMemo } from 'react-native';
 import React, { useState } from 'react';
 import { Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -45,13 +45,51 @@ const Card = ({ item }) => {
       testID={`card-${item.name}`}
     >
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-          {item.name}
-        </Text>
+        {/* Title with Rating */}
+        <View style={styles.titleRow}>
+          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+            {item.name}
+          </Text>
+          {item.rating && (
+            <View style={styles.ratingBadge}>
+              <MaterialIcons name="star" size={14} color="#FFB81C" />
+              <Text style={styles.ratingText}>{item.rating}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Availability Badge */}
+        {item.available === false && (
+          <View style={styles.unavailableBadge}>
+            <Text style={styles.unavailableText}>Out of Stock</Text>
+          </View>
+        )}
+
         <Text style={styles.cardDescription} numberOfLines={2} ellipsizeMode="tail">
           {item.description}
         </Text>
-        <Text style={styles.cardPrice}>{formatPriceMAD(item.price)}</Text>
+
+        {/* Tags */}
+        {item.tags && item.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {item.tags.map((tag, index) => (
+              <View key={index} style={[styles.tag, styles[`tag_${tag}`]]}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Price and Prepare Time */}
+        <View style={styles.footerRow}>
+          <Text style={styles.cardPrice}>{formatPriceMAD(item.price)}</Text>
+          {item.prepareTime && (
+            <View style={styles.prepareTimeContainer}>
+              <MaterialIcons name="schedule" size={14} color="#999" />
+              <Text style={styles.prepareTimeText}>{item.prepareTime}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Image with loading and error states */}
@@ -137,24 +175,114 @@ const styles = StyleSheet.create({
   cardBody: {
     flex: 1,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
     fontFamily: 'Karla-Bold',
     color: colors.textPrimary,
+    flex: 1,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8DC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 2,
+    color: '#333',
+    fontFamily: 'Karla-Bold',
+  },
+  unavailableBadge: {
+    backgroundColor: '#FFE5E5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 6,
+    alignSelf: 'flex-start',
+  },
+  unavailableText: {
+    fontSize: 11,
+    color: '#C41E3A',
+    fontWeight: '600',
+    fontFamily: 'Karla-Bold',
   },
   cardDescription: {
     color: '#666',
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Karla-Regular',
+    marginBottom: 6,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     marginBottom: 8,
+  },
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 4,
+  },
+  tag_vegetarian: {
+    backgroundColor: '#E8F5E9',
+  },
+  tag_vegetarian_text: {
+    color: '#2E7D32',
+  },
+  tag_healthy: {
+    backgroundColor: '#E3F2FD',
+  },
+  tag_healthy_text: {
+    color: '#1565C0',
+  },
+  tag_fresh: {
+    backgroundColor: '#FCE4EC',
+  },
+  tag_fresh_text: {
+    color: '#C2185B',
+  },
+  tagText: {
+    fontSize: 11,
+    fontWeight: '500',
+    fontFamily: 'Karla-Bold',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
   },
   cardPrice: {
     color: colors.secondary1,
-    marginTop: 6,
     fontWeight: '700',
     fontFamily: 'Karla-Bold',
     fontSize: 16,
+  },
+  prepareTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  prepareTimeText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    fontFamily: 'Karla-Regular',
   },
 });

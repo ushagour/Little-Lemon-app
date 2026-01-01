@@ -15,7 +15,10 @@ import Header from '../components/Header';
 import colors from '../config/colors';
 
 import {useSQLiteContext} from 'expo-sqlite';
-import { getAllItems, ensureMenuTable, insertMenuIntoSQLite,searchItemsByText } from '../database/queries';
+import { getAllItems,
+   ensureMenuTable,
+   insertMenuIntoSQLite,
+   searchItemsByText,insertMenuIfNotExists,clearMenuTable } from '../database/queries';
 
 import Card from '../components/ui/Card';
 import SeparatorView from '../components/ui/SeparatorView';
@@ -50,7 +53,7 @@ function Home({ navigation }) {
   const db = useSQLiteContext();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
-  const [remote, setRemote] = useState('https://raw.githubusercontent.com/ushagour/assets-files/main/little-lemon/assets/capstone.json'); // for debug/info
+  const [remote, setRemote] = useState('https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json'); // for debug/info
   const [refreshing, setRefreshing] = useState(false);
   
 
@@ -64,13 +67,19 @@ function Home({ navigation }) {
   useEffect(() => {
 
 
-    
+    // clearMenuTable(db).catch(err => console.error('Clear table error', err));
 
 
+
+    init();
+  }, [db]);
+
+
+  
     const init = async () => {
       if (!db) {
         // no sqlite available -> fallback to fetch
-        await loadFromRemoteAndSetState();
+        await loadFromRemoteAndSetState(data => setMenuData(data));
         
         return;
       }
@@ -101,16 +110,16 @@ function Home({ navigation }) {
       } catch (e) {
         console.error('Init DB/fetch error', e);
         // fallback to remote fetch if DB flow failed
-        await loadFromRemoteAndSetState();
+        await loadFromRemoteAndSetState(data => setMenuData(data));
       }
     };
 
-    init();
-  }, [db]);
 
 
   // Effect: run search when debouncedQuery changes (after 500ms pause)
   useEffect(() => {
+
+    // clearMenuTable(db).catch(err => console.error('Clear table error', err));
     if (debouncedQuery.trim() === '') {
       // if query is empty, reload all items
       getAllItems(db).then((rows) => {
@@ -140,7 +149,17 @@ function Home({ navigation }) {
 const onRefresh = async () => {
   setRefreshing(true);
   try {
-    await loadFromRemoteAndSetState();  
+    // Fetch remote data
+    const res = await fetch(remote);
+    const json = await res.json();
+    const items = Array.isArray(json) ? json : json.menu || [];
+
+    // Insert only new items that don't already exist
+    await insertMenuIfNotExists(db, items);
+
+    // Reload from DB and update state
+    const loaded = await getAllItems(db);
+    setMenuData(loaded.map(mapRowToUI));
   } catch (e) {
     console.error('Refresh error', e);
   } finally {
@@ -173,7 +192,7 @@ const onRefresh = async () => {
 
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
-
+        <Text style={styles.sectionSub}>{filtered.length} items</Text>
       </View>
 
       <View style={styles.categoryWrap}>
@@ -244,6 +263,9 @@ const styles = StyleSheet.create({
 
 // Map a DB row to the UI shape expected by the list
 function mapRowToUI(r, idx = 0) {
+  const tags = typeof r.tags === 'string' ? JSON.parse(r.tags || '[]') : (Array.isArray(r.tags) ? r.tags : []);
+  const available = typeof r.available === 'number' ? r.available === 1 : r.available !== false;
+  
   return {
     id: r.id ? String(r.id) : String(idx + 1),
     name: r.name || 'Untitled',
@@ -251,26 +273,33 @@ function mapRowToUI(r, idx = 0) {
     price: (typeof r.price === 'number' ? r.price : parseFloat(r.price) || 0).toFixed(2),
     category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',//capitalization handled in filter
     image: r.image,
+    rating: r.rating || null,
+    prepareTime: r.prepareTime || '',
+    available: available,
+    tags: tags,
   };
 }
 //this method fetches from remote api if there is no sql database available
 
 async function loadFromRemoteAndSetState() {
   try {
-    const res = await fetch(remote);
-    const json = await res.json();
-    const items = Array.isArray(json) ? json : json.menu || [];
-    const ui = items.map((it, idx) => ({
-      id: it.id ? String(it.id) : String(idx + 1),
-      title: it.name || it.title || 'Untitled',
-      description: it.description || '',
-    price: (typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0).toFixed(2),
-      category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-    image: it.image,
-    }));
-    setMenuData(ui);
-    setLoadedFrom("Remote API");
+
     
+      const res = await fetch('https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json');
+      const json = await res.json();
+      const items = Array.isArray(json) ? json : json.menu || [];
+      const ui = items.map((it, idx) => ({
+        id: it.id ? String(it.id) : String(idx + 1),
+        title: it.name || it.title || 'Untitled',
+        description: it.description || '',
+        price: (typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0).toFixed(2),
+        category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+      image: it.image,
+      }));
+      return ui;
+
+
+      
   } catch (err) {
     console.error('Remote load failed', err);
   }

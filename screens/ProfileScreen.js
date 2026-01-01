@@ -11,10 +11,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import IsAuthWrapper from '../components/ui/IsAuthWrapper';
 import NotificationCard from '../components/ui/NotificationCard';
+import { useSQLiteContext } from 'expo-sqlite';
+import { syncMenuDatabase } from '../database/queries';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, logout, isGuest } = useAuth();
   const { orders } = useOrders();
+  const db = useSQLiteContext();
 
   const [profile, setProfile] = useState({
     firstName: '',
@@ -162,6 +165,50 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleInitDB = async () => {
+    Alert.alert(
+      'Initialize Database',
+      'This will sync the database with the latest schema and reload menu data. Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sync Now',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!db) {
+                Alert.alert('Error', 'Database not available');
+                return;
+              }
+
+              showToast('Syncing database...');
+              const remote = 'https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json';
+              
+              const result = await syncMenuDatabase(db, remote);
+              
+              if (result.success) {
+                showToast(`Database synced! ${result.count} items loaded.`);
+                
+                // Navigate back to home to refresh the menu
+                setTimeout(() => {
+                  navigation.navigate('Home');
+                }, 1000);
+              } else {
+                Alert.alert('Sync Failed', result.error || 'Unknown error occurred');
+              }
+            } catch (error) {
+              console.error('DB Sync Error:', error);
+              Alert.alert('Error', 'Failed to sync database: ' + error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Header
@@ -285,6 +332,14 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('ChangePassword')} 
             color="danger"
             buttonStyle={styles.changePasswordButton} 
+            textStyle={[styles.TextButtons, { color: colors.white }]} 
+          />
+
+          <AppButton 
+            title="Sync Database" 
+            onPress={handleInitDB} 
+            color="secondary3"
+            buttonStyle={styles.initDBButton} 
             textStyle={[styles.TextButtons, { color: colors.white }]} 
           />
           
@@ -465,6 +520,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#DC3545',
+  },
+  initDBButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFA500',
   },
   saveButton: {
     marginTop: 12,

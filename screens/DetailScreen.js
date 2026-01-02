@@ -161,28 +161,15 @@ const DetailScreen = ({ navigation, route }) => {
           ) : null}
 
         </View>
-           <View style={styles.metaRow}>
-            <Ionicons name="bicycle" style={styles.logo}  size={20} color={colors.primary1} />
-        {/* <Image style={styles.logo} source={require("../assets/images/Delivery van.png")} /> */}
-        <Text style={styles.SmallText}>Delivery time : </Text>
-     
-          <Text style={styles.textBold}>20 minutes</Text>
-
-          {/* To-Do: add this feature later  */}
-           {/* 
-           <AppButton title="remove" 
-          
-            buttonStyle={{ flex:"end", marginLeft: 40, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.secondary2 }}
-            textStyle={styles.tagText}  /> */}
-          </View>
+ 
 
           {/* Authentication Check - Show login prompt if not authenticated */}
           {!isAuthenticated ? (
          <IsAuthWrapper navigation={navigation} />
           ) : (
           <View style={styles.metaRows}>
-        <View style={styles.metaRow}>
-          <View style={{flex: 1}}>
+          <View style={styles.detailContainer}>
+
             {extrasOptions.map((extra, index) => (
               <React.Fragment key={extra.id}>
                 {index > 0 && <Ligne />}
@@ -205,11 +192,7 @@ const DetailScreen = ({ navigation, route }) => {
                 </View>
               </React.Fragment>
             ))}
-          </View>
-        </View>
-        <Ligne style={{ marginVertical: 16 }} />
-
-        {/* Quantity Control */}
+                    {/* Quantity Control */}
         <View style={styles.quantitySection}>
           <Text style={styles.SmallText}>Quantity</Text>
           <View style={styles.quantityControls}>
@@ -235,6 +218,9 @@ const DetailScreen = ({ navigation, route }) => {
                   <Text style={[styles.SmallText]}>TOTAL</Text>
                   <Text style={[styles.price]}>{formatPriceMAD(TOTAL)}</Text>
            </View>
+          </View>
+
+
               
         <View style={styles.metaRow}>
           <AppButton 
@@ -352,7 +338,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
-
     fontFamily: 'Karla-Bold',
   },
   priceRow: {
@@ -420,7 +405,6 @@ const styles = StyleSheet.create({
 ,flexDirection: "row", justifyContent: "space-between", marginBottom: 8
   },
   tag: { backgroundColor: colors.secondary2, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16 },
-  tagText: { color: colors.secondary4, fontFamily: 'Karla-Medium' },
   price: { color: colors.secondary1, fontFamily: 'Karla-Bold', fontSize: isTablet ? 18 : 16 },
   description: { color: colors.black, marginTop: 12, lineHeight: 20, fontFamily: 'Karla-Regular' },
   footerButton: { display: 'flex', alignItems: 'center', marginTop: 24 , paddingHorizontal: 16, marginBottom: 12  },
@@ -462,5 +446,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     minWidth: 30,
     textAlign: 'center',
-  }
+  },
+    detailContainer: {
+      backgroundColor: colors.white,
+      marginHorizontal: 16,
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.secondary3,
+    },
 });

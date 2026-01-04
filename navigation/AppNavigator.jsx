@@ -10,6 +10,7 @@ import SplashScreen from '../screens/SplashScreen';
 import HomeScreen from '../screens/Home';
 import DetailScreen from '../screens/DetailScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
+import OrderDetailScreen from '../screens/OrderDetailScreen';
 import { useAuth } from '../hooks/useAuth';
 import ChangePassword from '../screens/Auth/ChangePassword';
 
@@ -40,6 +41,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ChangePassword" component={ChangePassword} />
         <Stack.Screen name="Details" component={DetailScreen} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
+        <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -3,9 +3,14 @@ import React from 'react'
 import colors from '../../config/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useOrders } from '../../hooks/useOrders';
+import { useNavigation } from '@react-navigation/native';
 
 const NotificationCard = () => {
       const { orders, markOrderAsRead, markAllAsRead, unreadCount } = useOrders();
+      const navigation = useNavigation();
+      
+      // Filter to show only unread orders
+      const unreadOrders = orders.filter(order => !order.read);
 
   return (
    <View style={styles.notificationSection}>
@@ -18,14 +23,17 @@ const NotificationCard = () => {
                 )}
               </View>
               
-              {orders.slice(0, 5).map((order) => (
+              {unreadOrders.slice(0, 5).map((order) => (
                 <TouchableOpacity 
                   key={order.id} 
                   style={[
                     styles.notificationItem,
                     !order.read && styles.unreadNotification
                   ]}
-                  onPress={() => markOrderAsRead(order.id)}
+                  onPress={() => {
+                    markOrderAsRead(order.id);
+                    navigation.navigate('OrderDetail', { order });
+                  }}
                 >
                   <View style={styles.notificationIcon}>
                     <Ionicons 

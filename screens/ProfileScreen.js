@@ -16,7 +16,7 @@ import { syncMenuDatabase } from '../database/queries';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, logout, isGuest } = useAuth();
-  const { orders } = useOrders();
+  const { orders,unreadCount } = useOrders();
   const db = useSQLiteContext();
 
   const [profile, setProfile] = useState({
@@ -217,6 +217,16 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
         }
+        rightContent={
+          <View style={styles.notificationIconWrapper}>
+            <Ionicons name="notifications" size={26} color={colors.primary1} />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        }
       />
 
       <View style={styles.ProfileWrapper}>
@@ -234,8 +244,17 @@ const ProfileScreen = ({ navigation }) => {
               <Image source={typeof profile.avatar === 'string' ? { uri: profile.avatar } : profile.avatar} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitials}>{initials || ''}</Text>
-              </View>
+                {initials ?
+                
+                <Text style={styles.avatarInitials}>{initials}</Text>
+                
+                :
+                <Ionicons name="person-circle" size={80} color={colors.primary1} />
+                }
+              
+
+
+                </View>
             )}
             <View style={styles.avatarButtons}>
               <AppButton
@@ -378,6 +397,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary1,
     borderRadius: 4,
   },
+  notificationIconWrapper: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
   avatarPlaceholder: {
     width: 80,
     height: 80,
@@ -386,7 +426,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D9EAF6',
+    backgroundColor: colors.secondary7,
   },
   avatarInitials: {
     color: colors.primary1,

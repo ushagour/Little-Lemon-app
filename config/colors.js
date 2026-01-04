@@ -2,11 +2,13 @@ export default {
   primary1: "#495E57",     // Ochre, main accent color
   primary2: "#F4CE14",     // Ochre, main accent color
   secondary1: "#EE9972",
+
   secondary2: "#FBDABB",
   secondary3: "#333333",
   secondary4: "#EDEFEE",
   secondary5: "#A1A4AD",
   secondary6: "#D9D9D9",
+  secondary7: "#D9EAF6",
 
   black: "#000",
   white: "#fff",

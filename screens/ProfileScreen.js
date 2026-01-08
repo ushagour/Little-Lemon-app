@@ -11,10 +11,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import IsAuthWrapper from '../components/ui/IsAuthWrapper';
 import NotificationCard from '../components/ui/NotificationCard';
+import { useSQLiteContext } from 'expo-sqlite';
+import { syncMenuDatabase } from '../database/queries';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, logout, isGuest } = useAuth();
-  const { orders } = useOrders();
+  const { orders,unreadCount } = useOrders();
+  const db = useSQLiteContext();
 
   const [profile, setProfile] = useState({
     firstName: '',
@@ -162,6 +165,50 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleInitDB = async () => {
+    Alert.alert(
+      'Initialize Database',
+      'This will sync the database with the latest schema and reload menu data. Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sync Now',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!db) {
+                Alert.alert('Error', 'Database not available');
+                return;
+              }
+
+              showToast('Syncing database...');
+              const remote = 'https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json';
+              
+              const result = await syncMenuDatabase(db, remote);
+              
+              if (result.success) {
+                showToast(`Database synced! ${result.count} items loaded.`);
+                
+                // Navigate back to home to refresh the menu
+                setTimeout(() => {
+                  navigation.navigate('Home');
+                }, 1000);
+              } else {
+                Alert.alert('Sync Failed', result.error || 'Unknown error occurred');
+              }
+            } catch (error) {
+              console.error('DB Sync Error:', error);
+              Alert.alert('Error', 'Failed to sync database: ' + error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Header
@@ -169,6 +216,16 @@ const ProfileScreen = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
+        }
+        rightContent={
+          <View style={styles.notificationIconWrapper}>
+            <Ionicons name="notifications" size={26} color={colors.primary1} />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </View>
         }
       />
 
@@ -187,8 +244,17 @@ const ProfileScreen = ({ navigation }) => {
               <Image source={typeof profile.avatar === 'string' ? { uri: profile.avatar } : profile.avatar} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitials}>{initials || ''}</Text>
-              </View>
+                {initials ?
+                
+                <Text style={styles.avatarInitials}>{initials}</Text>
+                
+                :
+                <Ionicons name="person-circle" size={80} color={colors.primary1} />
+                }
+              
+
+
+                </View>
             )}
             <View style={styles.avatarButtons}>
               <AppButton
@@ -287,6 +353,14 @@ const ProfileScreen = ({ navigation }) => {
             buttonStyle={styles.changePasswordButton} 
             textStyle={[styles.TextButtons, { color: colors.white }]} 
           />
+
+          <AppButton 
+            title="Sync Database" 
+            onPress={handleInitDB} 
+            color="secondary3"
+            buttonStyle={styles.initDBButton} 
+            textStyle={[styles.TextButtons, { color: colors.white }]} 
+          />
           
           <View style={styles.footerWrapper}>
             <AppButton
@@ -323,6 +397,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary1,
     borderRadius: 4,
   },
+  notificationIconWrapper: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
   avatarPlaceholder: {
     width: 80,
     height: 80,
@@ -331,7 +426,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D9EAF6',
+    backgroundColor: colors.secondary7,
   },
   avatarInitials: {
     color: colors.primary1,
@@ -465,6 +560,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#DC3545',
+  },
+  initDBButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFA500',
   },
   saveButton: {
     marginTop: 12,

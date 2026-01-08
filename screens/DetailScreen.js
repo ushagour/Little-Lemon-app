@@ -10,6 +10,7 @@ import AppCheckbox from '../components/Forms/AppCheckbox';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import IsAuthWrapper from '../components/ui/IsAuthWrapper';
+import { formatPriceMAD } from '../utils/currency';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -33,6 +34,10 @@ const DetailScreen = ({ navigation, route }) => {
       price:params.price,
       category: params.category,
       image: params.image,
+      rating: params.rating,
+      prepareTime: params.prepareTime,
+      available: params.available,
+      tags: params.tags,
     };
   }, [route]);
 
@@ -108,37 +113,63 @@ const DetailScreen = ({ navigation, route }) => {
 
         {/* Info */}
         <View style={styles.content}>
-          <Text style={styles.title}>{item?.name ?? 'Menu Item'}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{item?.name ?? 'Menu Item'}</Text>
+            {item?.rating && (
+              <View style={styles.ratingBadge}>
+                <MaterialIcons name="star" size={18} color="#FFB81C" />
+                <Text style={styles.ratingText}>{item.rating}</Text>
+              </View>
+            )}
+          </View>
 
-       
+          {/* Availability Status */}
+          {item?.available === false && (
+            <View style={styles.unavailableBanner}>
+              <MaterialIcons name="error-outline" size={18} color="#C41E3A" />
+              <Text style={styles.unavailableText}>Currently Out of Stock</Text>
+            </View>
+          )}
+
+          {/* Tags */}
+          {item?.tags && item.tags.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {item.tags.map((tag, index) => (
+                <View key={index} style={[styles.tagChip, styles[`tag_${tag}`]]}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Price and Prepare Time */}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Price</Text>
+            <Text style={styles.price}>{formatPriceMAD(item?.price || 0)}</Text>
+          </View>
+
+          {item?.prepareTime && (
+            <View style={styles.prepareTimeRow}>
+              <MaterialIcons name="schedule" size={18} color={colors.primary1} />
+              <Text style={styles.prepareTimeLabel}>Prepare Time: </Text>
+              <Text style={styles.prepareTimeValue}>{item.prepareTime}</Text>
+            </View>
+          )}
 
           {item?.description ? (
             <Text style={styles.description}>{item.description}</Text>
           ) : null}
 
         </View>
-           <View style={styles.metaRow}>
-            <Ionicons name="bicycle" style={styles.logo}  size={20} color={colors.primary1} />
-        {/* <Image style={styles.logo} source={require("../assets/images/Delivery van.png")} /> */}
-        <Text style={styles.SmallText}>Delivery time : </Text>
-     
-          <Text style={styles.textBold}>20 minutes</Text>
-
-          {/* To-Do: add this feature later  */}
-           {/* 
-           <AppButton title="remove" 
-          
-            buttonStyle={{ flex:"end", marginLeft: 40, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.secondary2 }}
-            textStyle={styles.tagText}  /> */}
-          </View>
+ 
 
           {/* Authentication Check - Show login prompt if not authenticated */}
           {!isAuthenticated ? (
          <IsAuthWrapper navigation={navigation} />
           ) : (
           <View style={styles.metaRows}>
-        <View style={styles.metaRow}>
-          <View style={{flex: 1}}>
+          <View style={styles.detailContainer}>
+
             {extrasOptions.map((extra, index) => (
               <React.Fragment key={extra.id}>
                 {index > 0 && <Ligne />}
@@ -147,7 +178,7 @@ const DetailScreen = ({ navigation, route }) => {
                   
                   <AppCheckbox 
                     checked={selectedExtras.some(e => e.id === extra.id)}
-                    label={`$${extra.price.toFixed(2)}`}
+                    label={formatPriceMAD(extra.price)}
                     onChange={(isSelected) => {
 
                       if (isSelected) {
@@ -161,11 +192,7 @@ const DetailScreen = ({ navigation, route }) => {
                 </View>
               </React.Fragment>
             ))}
-          </View>
-        </View>
-        <Ligne style={{ marginVertical: 16 }} />
-
-        {/* Quantity Control */}
+                    {/* Quantity Control */}
         <View style={styles.quantitySection}>
           <Text style={styles.SmallText}>Quantity</Text>
           <View style={styles.quantityControls}>
@@ -189,12 +216,15 @@ const DetailScreen = ({ navigation, route }) => {
 
             <View style={styles.TotalRow}  >
                   <Text style={[styles.SmallText]}>TOTAL</Text>
-                  <Text style={[styles.price]}>${TOTAL.toFixed(2)}</Text>
+                  <Text style={[styles.price]}>{formatPriceMAD(TOTAL)}</Text>
            </View>
+          </View>
+
+
               
         <View style={styles.metaRow}>
           <AppButton 
-            title={isAdding ? 'Adding to Cart...' : `Add to Cart for $${TOTAL.toFixed(2)}`}
+            title={isAdding ? 'Adding to Cart...' : `Add to Cart for ${formatPriceMAD(TOTAL)}`}
             color="primary2"
             buttonStyle={{width: "80%",alignItems: "center",fontFamily: "Karla-Bold"}}
             disabled={isAdding}
@@ -247,6 +277,104 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: isTablet ? 24 : 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8DC',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 4,
+    color: '#333',
+    fontFamily: 'Karla-Bold',
+  },
+  unavailableBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFE5E5',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  unavailableText: {
+    fontSize: 14,
+    color: '#C41E3A',
+    fontWeight: '600',
+    marginLeft: 8,
+    fontFamily: 'Karla-Bold',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tagChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tag_vegetarian: {
+    backgroundColor: '#E8F5E9',
+  },
+  tag_healthy: {
+    backgroundColor: '#E3F2FD',
+  },
+  tag_fresh: {
+    backgroundColor: '#FCE4EC',
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'Karla-Bold',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  priceLabel: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Karla-Regular',
+  },
+  prepareTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  prepareTimeLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+    fontFamily: 'Karla-Regular',
+  },
+  prepareTimeValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary1,
+    fontFamily: 'Karla-Bold',
+  },
   heroImage: {
     width: isTablet ? Math.min(700, width - 48) : width - 32,
     height: isTablet ? 320 : 220,
@@ -277,7 +405,6 @@ const styles = StyleSheet.create({
 ,flexDirection: "row", justifyContent: "space-between", marginBottom: 8
   },
   tag: { backgroundColor: colors.secondary2, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16 },
-  tagText: { color: colors.secondary4, fontFamily: 'Karla-Medium' },
   price: { color: colors.secondary1, fontFamily: 'Karla-Bold', fontSize: isTablet ? 18 : 16 },
   description: { color: colors.black, marginTop: 12, lineHeight: 20, fontFamily: 'Karla-Regular' },
   footerButton: { display: 'flex', alignItems: 'center', marginTop: 24 , paddingHorizontal: 16, marginBottom: 12  },
@@ -319,5 +446,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     minWidth: 30,
     textAlign: 'center',
-  }
+  },
+    detailContainer: {
+      backgroundColor: colors.white,
+      marginHorizontal: 16,
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.secondary3,
+    },
 });

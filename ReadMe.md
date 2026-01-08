@@ -7,7 +7,18 @@ A small React Native demo app for a restaurant-style onboarding and profile flow
 
 ## Scenario 
 
-![Logo](./App DOC/screenshots/scenario1.png)
+![Logo](./markdown/screenshots/scenario1.png)
+
+
+## screen shots
+
+
+![auth](./markdown/screenshots/1.png)
+![app](./markdown/screenshots/2.png)
+
+
+
+
 
 
 ## Features
@@ -106,7 +117,6 @@ Fallback to Remote API fetch
 Display UI, retry DB seeding in background
 ```
 
-## Screenshots
 
 
 
@@ -116,9 +126,6 @@ Display UI, retry DB seeding in background
 2. Start the Metro bundler: `npx react-native start`
 3. Run on Android: `npx react-native run-android` or iOS: `npx react-native run-ios`
 
-Notes:
-- This project uses `react-native-mask-text` for phone masking and `@react-native-async-storage/async-storage` for simple persistence.
-- If you want me to add screenshots of other screens or change the README tone, tell me which images or wording you prefer.
 
 
 

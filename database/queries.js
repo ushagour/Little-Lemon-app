@@ -9,7 +9,6 @@ export const getMenuItemById = async (db, id) => {
   return items.length > 0 ? items[0] : null;
 };  
 
-// Insert MENU items into SQLite (sequential to avoid statement finalization issues)
 export const insertMenuIntoSQLite = async (db, menuItems = []) => {
   if (!db) throw new Error('db is required');
   const items = Array.isArray(menuItems) ? menuItems : [menuItems];
@@ -23,10 +22,14 @@ export const insertMenuIntoSQLite = async (db, menuItems = []) => {
       typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
       item.category || '',
       item.image || '',
+      typeof item.rating === 'number' ? item.rating : null,
+      item.prepareTime || '',
+      item.available !== undefined ? (item.available ? 1 : 0) : 1,
+      item.tags ? JSON.stringify(item.tags) : '',
     ];
     // eslint-disable-next-line no-await-in-loop
     await db.runAsync(
-      `INSERT OR REPLACE INTO menu (id, name, description, price, category, image) VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT OR REPLACE INTO menu (id, name, description, price, category, image, rating, prepareTime, available, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       , vals
     );
   }
@@ -42,7 +45,11 @@ export const ensureMenuTable = async (db) => {
       description TEXT,
       price REAL,
       category TEXT,
-      image TEXT
+      image TEXT,
+      rating REAL,
+      prepareTime TEXT,
+      available INTEGER DEFAULT 1,
+      tags TEXT
     )`
   );
 };
@@ -52,6 +59,33 @@ export const ensureMenuTable = async (db) => {
 //empty the menu table
 export const clearMenuTable = async (db) => {
   await db.runAsync(`DELETE FROM menu`);
+};
+
+// Drop and recreate the menu table with updated schema (for syncing database structure)
+export const resetMenuTable = async (db) => {
+  await db.runAsync(`DROP TABLE IF EXISTS menu`);
+  await ensureMenuTable(db);
+};
+
+// Sync database: clear data and reload from remote
+export const syncMenuDatabase = async (db, remoteUrl) => {
+  try {
+    // Drop and recreate table to ensure schema is up to date
+    await resetMenuTable(db);
+    
+    // Fetch remote data
+    const res = await fetch(remoteUrl);
+    const json = await res.json();
+    const menu = json?.menu || [];
+    
+    // Insert all items
+    await insertMenuIntoSQLite(db, menu);
+    
+    return { success: true, count: menu.length };
+  } catch (error) {
+    console.error('Sync error:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 
@@ -70,3 +104,31 @@ export const searchItemsByText = async (db, query) => {
     [likeQuery, likeQuery]
   );
 };
+
+export const insertMenuIfNotExists = async (db, menuItems = []) => {
+  if (!db) throw new Error('db is required');
+  const items = Array.isArray(menuItems) ? menuItems : [menuItems];
+  await ensureMenuTable(db);
+  for (const item of items) { 
+    const existing = await getMenuItemById(db, item.id);
+    if (!existing) {
+      const vals = [
+        item.id || null,
+        item.name || '',
+        item.description || '',
+        typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
+        item.category || '',
+        item.image || '',
+        typeof item.rating === 'number' ? item.rating : null,
+        item.prepareTime || '',
+        item.available !== undefined ? (item.available ? 1 : 0) : 1,
+        item.tags ? JSON.stringify(item.tags) : '',
+      ];
+      // eslint-disable-next-line no-await-in-loop
+      await db.runAsync(  
+        `INSERT INTO menu (id, name, description, price, category, image,rating,prepareTime,available,tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        , vals
+      );
+    }
+  }
+}

@@ -24,7 +24,15 @@
     "preview4": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "production"
+      }
+    }
   },
   "submit": {
     "production": {}

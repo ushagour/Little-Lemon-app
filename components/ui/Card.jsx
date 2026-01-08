@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, ActivityIndicator, Dimensions, useCallback, useMemo } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import colors from '../../config/colors';
@@ -20,23 +20,26 @@ const isTablet = width >= 768;
  * - Responsive sizing for different devices
  * - Accessibility support
  */
-const Card = ({ item }) => {
+const Card = React.memo(({ item }) => {
   const navigation = useNavigation();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     setImageLoading(false);
-  };
+  }, []);
 
-  const handleImageError = (error) => {
+  const handleImageError = useCallback((error) => {
     // console.warn(`Image failed to load for ${item.name}:`, item.image, error);
     setImageLoading(false);
     setImageError(true);
-  };
+  }, [item.name, item.image]);
 
-  const imageSize = isTablet ? 90 : 70;
-  const isValidUrl = getImageUrl(item.image) && (getImageUrl(item.image).startsWith('https://') || getImageUrl(item.image).startsWith('https://'));
+  const imageSize = useMemo(() => (isTablet ? 90 : 70), []);
+  const isValidUrl = useMemo(
+    () => getImageUrl(item.image) && (getImageUrl(item.image).startsWith('https://') || getImageUrl(item.image).startsWith('https://')),
+    [item.image]
+  );
   return (
     <TouchableOpacity
       style={styles.card}
@@ -123,9 +126,9 @@ const Card = ({ item }) => {
       </View>
     </TouchableOpacity>
   );
-};
 
-export default Card;
+});  
+  export default Card;
 
 const styles = StyleSheet.create({
   card: {
@@ -286,3 +289,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Karla-Regular',
   },
 });
+

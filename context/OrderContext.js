@@ -28,7 +28,7 @@ export const OrderProvider = ({ children }) => {
         setOrders(data);
       }
     } catch (e) {
-      console.log('Error loading orders from storage:', e);
+      // Error loading orders from storage
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +50,7 @@ export const OrderProvider = ({ children }) => {
       await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
       return newOrder;
     } catch (e) {
-      console.log('Error adding order:', e);
+      // Error adding order
       return null;
     }
   };
@@ -65,7 +65,7 @@ export const OrderProvider = ({ children }) => {
       await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
       return true;
     } catch (e) {
-      console.log('Error marking order as read:', e);
+      // Error marking order as read
       return false;
     }
   };
@@ -78,7 +78,7 @@ export const OrderProvider = ({ children }) => {
       await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
       return true;
     } catch (e) {
-      console.log('Error marking all orders as read:', e);
+      // Error marking all orders as read
       return false;
     }
   };
@@ -93,7 +93,7 @@ export const OrderProvider = ({ children }) => {
       await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
       return true;
     } catch (e) {
-      console.log('Error updating order status:', e);
+      // Error updating order status
       return false;
     }
   };

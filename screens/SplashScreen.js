@@ -12,12 +12,8 @@ const SplashScreen = ({ onGetStarted = () => {} }) => {
           <Text style={styles.tagline}>Welcome to Little Lemon</Text>
           <Image style={styles.logo} source={require("../assets/images/Logo.png")} />
         </View>
-        <View style={styles.buttonsContainer}>
-          {/* <Button title="Login"  onPress={()=>{navigation.navigate("Login")}} />
-          <Button title="Register" color="secondary"  onPress={()=>{navigation.navigate("Register")}} /> */}
-        </View>
         <View style={styles.splashContainer}>
-          <Text style={styles.copyrightText}>Copyright © 2025 </Text>
+          <Text style={styles.copyrightText}> V1.0 Copyright © 2025 </Text>
         </View>
       </ImageBackground>
   );

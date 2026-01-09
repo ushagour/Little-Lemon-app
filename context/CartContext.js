@@ -21,7 +21,7 @@ export const CartProvider = ({ children }) => {
         setCartItems(data);
       }
     } catch (e) {
-      console.log('Error loading cart from storage:', e);
+      // Error loading cart from storage
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +43,7 @@ export const CartProvider = ({ children }) => {
       await AsyncStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
       return true;
     } catch (e) {
-      console.log('Error adding to cart:', e);
+      // Error adding to cart
       return false;
     }
   };
@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
       await AsyncStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
       return true;
     } catch (e) {
-      console.log('Error removing from cart:', e);
+      // Error removing from cart
       return false;
     }
   };
@@ -77,7 +77,7 @@ export const CartProvider = ({ children }) => {
       await AsyncStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
       return true;
     } catch (e) {
-      console.log('Error updating quantity:', e);
+      // Error updating quantity
       return false;
     }
   };
@@ -89,7 +89,7 @@ export const CartProvider = ({ children }) => {
       await AsyncStorage.setItem(CART_KEY, JSON.stringify([]));
       return true;
     } catch (e) {
-      console.log('Error clearing cart:', e);
+      // Error clearing cart
       return false;
     }
   };

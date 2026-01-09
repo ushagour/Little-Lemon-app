@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
           setUser(data);
         }
       } catch (e) {
-        console.log('Error loading user from storage:', e);
+        // Error loading user from storage
       } finally {
         setIsLoading(false);
       }
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return true;
     } catch (e) {
-      console.log('Error saving user to storage:', e);
+      // Error saving user to storage
       return false;
     }
   };
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       setUser(nextUser);
       return true;
     } catch (e) {
-      console.log('Error completing onboarding:', e);
+      // Error completing onboarding
       return false;
     }
   };
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       return true;
     } catch (e) {
-      console.log('Error clearing user:', e);
+      // Error clearing user
       return false;
     }
   };
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
       await completeOnboarding(userData);
       return true;
     } catch (e) {
-      console.log('Error saving user to storage:', e);
+      // Error saving user to storage
       return false;
     }
   };
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
       return true;
     }
     catch (e) {
-      console.log('Error saving user to storage:', e);
+      // Error saving user to storage
       return false;
     }
   };

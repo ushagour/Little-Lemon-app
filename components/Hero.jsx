@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image } from 'react-native'
 import React from 'react'
 import colors from '../config/colors';
 
-const Hero = ({ children }) => {
+const Hero = React.memo(({ children }) => {
   return (
     <View style={styles.hero}>
       <View style={styles.heroOverlay} />
@@ -17,7 +17,7 @@ const Hero = ({ children }) => {
       {children}
     </View>   
   )
-}
+})
 
 export default Hero
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid, TextInput } from 'react-native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid, TextInput, LinearGradient } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AppButton from '../components/Forms/AppButton';
 import colors from '../config/colors';
@@ -13,6 +13,7 @@ import IsAuthWrapper from '../components/ui/IsAuthWrapper';
 import NotificationCard from '../components/ui/NotificationCard';
 import { useSQLiteContext } from 'expo-sqlite';
 import { syncMenuDatabase } from '../database/queries';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, logout, isGuest } = useAuth();
@@ -185,9 +186,8 @@ const ProfileScreen = ({ navigation }) => {
               }
 
               showToast('Syncing database...');
-              const remote = 'https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json';
               
-              const result = await syncMenuDatabase(db, remote);
+              const result = await syncMenuDatabase(db, getEnvVars.API_URL);
               
               if (result.success) {
                 showToast(`Database synced! ${result.count} items loaded.`);
@@ -237,8 +237,20 @@ const ProfileScreen = ({ navigation }) => {
          <NotificationCard  />
           )}
 
-          <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
-          <Text style={styles.titleSmall}>Avatar</Text>
+          {/* Profile Header Card */}
+          <View style={styles.profileHeaderCard}>
+            <View style={styles.profileHeaderContent}>
+              <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
+              <Text style={styles.subtitleText}>Manage your account details and preferences</Text>
+            </View>
+          </View>
+
+          {/* Avatar Section Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="account-circle" size={24} color={colors.primary1} />
+              <Text style={styles.sectionTitle}>Profile Picture</Text>
+            </View>
           <View style={styles.row}>
             {profile.avatar ? (
               <Image source={typeof profile.avatar === 'string' ? { uri: profile.avatar } : profile.avatar} style={styles.avatar} />
@@ -258,66 +270,91 @@ const ProfileScreen = ({ navigation }) => {
             )}
             <View style={styles.avatarButtons}>
               <AppButton
-                title="change"
+                children={<MaterialIcons name="photo-library" size={20} color={colors.white} />}
                 onPress={pickImage}
                 color="primary1"
-                buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-                textStyle={[styles.TextButtons, { color: colors.white }]}
               />
               <AppButton
-                title="remove"
+                children={<MaterialIcons name="delete" size={20} color={colors.white} />}
                 onPress={removeAvatar}
-                color="white"
-                buttonStyle={styles.discardButton}
-                textStyle={{ ...styles.TextButtons, color: colors.primary1 }}
+                color="primary2"
               />
             </View>
           </View>
+          </View>
 
+          {/* Personal Details Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="person" size={24} color={colors.primary1} />
+              <Text style={styles.sectionTitle}>Personal Details</Text>
+            </View>
           <View style={styles.inputContainer}>
             <View style={styles.inputRow}>
-              <TextInput
-                value={profile.firstName}
-                placeholder="First Name"
-                onChangeText={(t) => setProfile((p) => ({ ...p, firstName: t }))}
-                style={styles.input}
-              />
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="person-outline" size={20} color={colors.primary1} style={styles.inputIcon} />
+                <TextInput
+                  value={profile.firstName}
+                  placeholder="First Name"
+                  onChangeText={(t) => setProfile((p) => ({ ...p, firstName: t }))}
+                  style={styles.inputWithIcon}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
             <View style={styles.inputRow}>
-              <TextInput
-                value={profile.lastName}
-                placeholder="Last Name"
-                onChangeText={(t) => setProfile((p) => ({ ...p, lastName: t }))}
-                style={styles.input}
-              />
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="badge" size={20} color={colors.primary1} style={styles.inputIcon} />
+                <TextInput
+                  value={profile.lastName}
+                  placeholder="Last Name"
+                  onChangeText={(t) => setProfile((p) => ({ ...p, lastName: t }))}
+                  style={styles.inputWithIcon}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
             <View style={styles.inputRow}>
-              <TextInput
-                value={profile.email}
-                placeholder="Email"
-                onChangeText={(t) => setProfile((p) => ({ ...p, email: t }))}
-                style={styles.input}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="email" size={20} color={colors.primary1} style={styles.inputIcon} />
+                <TextInput
+                  value={profile.email}
+                  placeholder="Email Address"
+                  onChangeText={(t) => setProfile((p) => ({ ...p, email: t }))}
+                  style={styles.inputWithIcon}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
             <View style={styles.inputRow}>
-              <MaskedTextInput
-                mask="+212 [6-9]99 999-9999"
-                onChangeText={(masked) => setProfile((p) => ({ ...p, phone: masked }))}
-                placeholder="+212 600 000-0000"
-                style={[styles.input, { paddingVertical: 8, borderWidth: 1, borderColor: colors.primary1, backgroundColor: '#F5F5F5', paddingHorizontal: 12 }]}
-                keyboardType="phone-pad"
-                value={profile.phone}
-              />
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="phone" size={20} color={colors.primary1} style={styles.inputIcon} />
+                <MaskedTextInput
+                  mask="+212 [6-9]99 999-9999"
+                  onChangeText={(masked) => setProfile((p) => ({ ...p, phone: masked }))}
+                  placeholder="+212 600 000-0000"
+                  style={styles.inputWithIcon}
+                  keyboardType="phone-pad"
+                  value={profile.phone}
+                  placeholderTextColor="#999"
+                />
+              </View>
             </View>
 
-            {!phoneIsValid && phoneRaw.length > 0 ? <Text style={styles.errorText}>Enter a valid Moroccan phone number (+212 + 9 digits).</Text> : null}
+            {!phoneIsValid && phoneRaw.length > 0 ? <Text style={styles.errorText}>⚠️ Enter a valid Moroccan phone number (+212 + 9 digits).</Text> : null}
             {!hasData && <Text style={styles.noData}>No profile data provided.</Text>}
           </View>
+          </View>
 
+          {/* Notifications Preferences Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="notifications-active" size={24} color={colors.primary1} />
+              <Text style={styles.sectionTitle}>Email Notifications</Text>
+            </View>
           <View style={styles.checkBoxContainer}>
-            <Text style={styles.sectionTitle}>Email notifications</Text>
             <AppCheckbox
               checked={profile.prefOrderStatus}
               onChange={(val) => setProfile((p) => ({ ...p, prefOrderStatus: val }))}
@@ -343,8 +380,44 @@ const ProfileScreen = ({ navigation }) => {
               label="Newsletter"
             />
           </View>
+          </View>
 
-          <AppButton title="logout" onPress={handelLogout} color="primary2" buttonStyle={styles.LogoutButton} textStyle={styles.TextButtons} />
+       {/* Save/Discard Footer */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+            <AppButton
+              title="Discard"
+              onPress={Discard}
+              color="white"
+              disabled={!phoneIsValid}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
+            />
+            <AppButton
+              title="Save"
+              onPress={save}
+              color="primary1"
+              disabled={!phoneIsValid}
+              textStyle={[styles.TextButtons, { color: colors.white }]}
+              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
+            />
+          </View>  
+          </View>  
+
+          {/* Quick Actions Card */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="settings" size={24} color={colors.primary1} />
+              <Text style={styles.sectionTitle}>Account Actions</Text>
+            </View>
+
+          <AppButton 
+            title="Logout" 
+            onPress={handelLogout} 
+            color="primary2" 
+            buttonStyle={styles.LogoutButton} 
+            textStyle={styles.TextButtons}
+            icon={<MaterialIcons name="logout" size={20} color={colors.primary1} style={{ marginRight: 8 }} />}
+          />
           
           <AppButton 
             title="Change Password" 
@@ -361,24 +434,9 @@ const ProfileScreen = ({ navigation }) => {
             buttonStyle={styles.initDBButton} 
             textStyle={[styles.TextButtons, { color: colors.white }]} 
           />
+          </View>
           
-          <View style={styles.footerWrapper}>
-            <AppButton
-              title="Discard Changes"
-              onPress={Discard}
-              color="white"
-              disabled={!phoneIsValid}
-              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-            />
-            <AppButton
-              title="Save Changes"
-              onPress={save}
-              color="primary1"
-              disabled={!phoneIsValid}
-              textStyle={[styles.TextButtons, { color: colors.white }]}
-              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-            />
-          </View>          
+           
         </ScrollView>
       </View>
     </View>
@@ -390,12 +448,13 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDEFEE',
+    backgroundColor: '#F8F9FA',
     justifyContent: 'flex-start',
   },
   backButton: {
     backgroundColor: colors.primary1,
-    borderRadius: 4,
+    borderRadius: 8,
+    padding: 4,
   },
   notificationIconWrapper: {
     position: 'relative',
@@ -418,23 +477,76 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  profileHeaderCard: {
+    backgroundColor: 'rgba(73, 94, 87, 0.05)',
+    padding: 20,
+    borderRadius: 12,
     marginBottom: 16,
-    marginRight: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary1,
+  },
+  profileHeaderContent: {
+    gap: 4,
+  },
+  subtitleText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Karla-Regular',
+    marginTop: 4,
+  },
+  sectionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: 'MarkaziText-Medium',
+    color: colors.textPrimary,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: 'MarkaziText-Medium',
+    color: colors.textPrimary,
+  },
+  avatarPlaceholder: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 16,
+    marginRight: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.secondary7,
+    borderWidth: 3,
+    borderColor: colors.primary1,
+    shadowColor: colors.primary1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatarInitials: {
     color: colors.primary1,
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
   },
   ProfileWrapperTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     fontFamily: 'MarkaziText-Medium',
     color: colors.textPrimary,
@@ -446,22 +558,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     marginBottom: 16,
-    marginRight: 12,
+    marginRight: 16,
+    borderWidth: 3,
+    borderColor: colors.primary1,
+    shadowColor: colors.primary1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   ProfileWrapper: {
     flex: 1,
     width: '100%',
-    backgroundColor: colors.white,
+    backgroundColor: 'transparent',
     padding: 16,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
   },
   titleSmall: {
     fontSize: 12,
@@ -470,19 +584,19 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 16,
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   avatarButtons: {
-    paddingVertical: 6,
+    flex: 1,
     flexDirection: 'row',
-    height: 120,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 10,
   },
   inputContainer: {
-    alignItems: 'center',
+    width: '100%',
   },
   label: {
     fontWeight: '600',
@@ -491,33 +605,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   noData: {
-    color: '#666',
-    marginBottom: 20,
+    color: '#999',
+    marginTop: 12,
     textAlign: 'center',
+    fontStyle: 'italic',
   },
   inputRow: {
+    marginBottom: 14,
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  input: {
-    backgroundColor: colors.white,
-    borderRadius: 6,
-    height: 40,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.primary1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
     paddingHorizontal: 12,
     width: '100%',
   },
-  checkBoxContainer: {
-    marginTop: 12,
+  inputIcon: {
+    marginRight: 10,
   },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: '600',
-    fontFamily: 'MarkaziText-Medium',
-    color: colors.textPrimary,
+  inputWithIcon: {
+    flex: 1,
+    height: 48,
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Karla-Regular',
+  },
+  input: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    height: 48,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 14,
+    width: '100%',
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Karla-Regular',
+  },
+  checkBoxContainer: {
+    gap: 8,
   },
   checkRow: {
     flexDirection: 'row',
@@ -537,68 +667,93 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.danger,
+    marginTop: 4,
     marginBottom: 8,
-    alignSelf: 'flex-start',
+    fontSize: 13,
+    fontFamily: 'Karla-Regular',
   },
   LogoutButton: {
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
+    marginTop: 8,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 10,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   changePasswordButton: {
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
+    marginTop: 10,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 10,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#DC3545',
+    shadowColor: '#DC3545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   initDBButton: {
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
+    marginTop: 10,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 10,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFA500',
+    shadowColor: '#FFA500',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   saveButton: {
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
+    flex: 1,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 10,
+    marginHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   discardButton: {
+    flex: 1,
     borderColor: colors.primary1,
-    borderWidth: 1,
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
+    borderWidth: 1.5,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 10,
+    marginHorizontal: 6,
   },
   TextButtons: {
-    fontStyle: 'bold',
     fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'Karla-Bold',
   },
   footerWrapper: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    gap: 4,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 20,
   },
   
  

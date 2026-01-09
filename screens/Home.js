@@ -25,7 +25,7 @@ import SeparatorView from '../components/ui/SeparatorView';
 import SearchView from '../components/Forms/SearchView';
 import { useAuth } from '../hooks/useAuth';
 import Hero from '../components/Hero';
-
+import getEnvVars from '../config/environment';
 
 
 // Custom hook: debounce a value with a delay (in ms)
@@ -53,8 +53,8 @@ function Home({ navigation }) {
   const db = useSQLiteContext();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
-  const [remote, setRemote] = useState('https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json'); // for debug/info
   const [refreshing, setRefreshing] = useState(false);
+  const { API_URL } = getEnvVars;
   
 
   const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
@@ -65,7 +65,7 @@ function Home({ navigation }) {
 
 
   useEffect(() => {
-
+    
 
     // clearMenuTable(db).catch(err => console.error('Clear table error', err));
 
@@ -95,8 +95,8 @@ function Home({ navigation }) {
           return;
         }
 
-        // 3) empty DB -> fetch remote, insert all, then load from DB
-        const res = await fetch(remote);
+        // 3) empty DB -> fetch API_URL, insert all, then load from DB
+        const res = await fetch(API_URL);
         const json = await res.json();
         const items = Array.isArray(json) ? json : json.menu || [];
 
@@ -109,7 +109,7 @@ function Home({ navigation }) {
         setMenuData(loaded.map(mapRowToUI));
       } catch (e) {
         console.error('Init DB/fetch error', e);
-        // fallback to remote fetch if DB flow failed
+        // fallback to API_URL fetch if DB flow failed
         await loadFromRemoteAndSetState(data => setMenuData(data));
       }
     };
@@ -149,8 +149,8 @@ function Home({ navigation }) {
 const onRefresh = async () => {
   setRefreshing(true);
   try {
-    // Fetch remote data
-    const res = await fetch(remote);
+    // Fetch API_URL data
+    const res = await fetch(API_URL);
     const json = await res.json();
     const items = Array.isArray(json) ? json : json.menu || [];
 
@@ -192,7 +192,6 @@ const onRefresh = async () => {
 
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
-        <Text style={styles.sectionSub}>{filtered.length} items</Text>
       </View>
 
       <View style={styles.categoryWrap}>
@@ -279,13 +278,12 @@ function mapRowToUI(r, idx = 0) {
     tags: tags,
   };
 }
-//this method fetches from remote api if there is no sql database available
+//this method fetches from API_URL api if there is no sql database available
 
 async function loadFromRemoteAndSetState() {
   try {
 
-    
-      const res = await fetch('https://raw.githubusercontent.com/ushagour/apps-assets/main/little-lemon/assets/capstone.json');
+      const res = await fetch(API_URL);
       const json = await res.json();
       const items = Array.isArray(json) ? json : json.menu || [];
       const ui = items.map((it, idx) => ({

@@ -16,10 +16,9 @@ export const useFonts = () => {
 
 
         await Font.loadAsync({
-         "Karla-Regular": require("../assets/fonts/Karla-Regular.ttf"),
+          "Karla-Regular": require("../assets/fonts/Karla-Regular.ttf"),
           "Karla-Medium": require("../assets/fonts/Karla-Medium.ttf"),
           "Karla-Bold": require("../assets/fonts/Karla-Bold.ttf"),
-          "Karla-ExtraBold": require("../assets/fonts/Karla-ExtraBold.ttf"),
           "MarkaziText-Regular": require("../assets/fonts/MarkaziText-Regular.ttf"),
           "MarkaziText-Medium": require("../assets/fonts/MarkaziText-Medium.ttf"),
         });

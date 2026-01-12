@@ -68,7 +68,7 @@ const Card = React.memo(({ item }) => {
           </View>
         )}
 
-        <Text style={styles.cardDescription} numberOfLines={2} ellipsizeMode="tail">
+        <Text style={styles.cardDescription} numberOfLines={4} ellipsizeMode="tail">
           {item.description}
         </Text>
 
@@ -226,6 +226,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Karla-Regular',
     marginBottom: 6,
+    lineHeight: 18,
+    minHeight: 72,
+    maxHeight: 72,
   },
   tagsContainer: {
     flexDirection: 'row',

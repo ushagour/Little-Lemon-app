@@ -4,13 +4,12 @@ import { View, Text, Image, StyleSheet, ImageBackground } from 'react-native';
 const SplashScreen = ({ onGetStarted = () => {} }) => {
   return (
    <ImageBackground
-        blurRadius={15}   // 👈 adjust blur level
+        blurRadius={15}
         style={styles.background}
-        source={require("../assets/images/Lemon dessert.png")}
+        source={require("../assets/Lemon-dessert.png")}
       >
         <View style={styles.logoContainer}>
-          <Text style={styles.tagline}>Welcome to Little Lemon</Text>
-          <Image style={styles.logo} source={require("../assets/images/Logo.png")} />
+          <Image style={styles.logo} source={require("../assets/Logo.png")} />
         </View>
         <View style={styles.splashContainer}>
           <Text style={styles.copyrightText}> V1.0 Copyright © 2025 </Text>

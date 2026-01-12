@@ -15,6 +15,7 @@ A small React Native demo app for a restaurant-style onboarding and profile flow
 
 ![auth](./markdown/screenshots/1.png)
 ![app](./markdown/screenshots/2.png)
+![app](./markdown/screenshots/3.png)
 
 
 

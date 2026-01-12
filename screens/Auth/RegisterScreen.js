@@ -82,7 +82,7 @@ const RegisterScreen = ({ navigation }) => {
         <View style={styles.wrapper}>
           <Text style={styles.title}>Create Account</Text>
           <Image
-            source={require('../../assets/images/Logo.png')}
+            source={require('../../assets/Logo.png')}
           />
         </View>
 

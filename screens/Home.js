@@ -192,6 +192,7 @@ const onRefresh = async () => {
 
       <View style={styles.listHeader}>
         <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
+        <Text style={styles.sectionSub}>{filtered.length} items available.</Text>
       </View>
 
       <View style={styles.categoryWrap}>

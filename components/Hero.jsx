@@ -11,7 +11,7 @@ const Hero = React.memo(({ children }) => {
           <Text style={styles.heroTitle}>Little Lemon</Text>
           <Text style={styles.heroSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
         </View>
-        <Image source={require('../assets/images/Hero image.png')} style={styles.heroRightImage} />
+        <Image source={require('../assets/Hero.png')} style={styles.heroRightImage} />
       </View>
       
       {children}

@@ -22,7 +22,7 @@ const OnboardingScreen = ({ navigation }) => {
         <View style={styles.wrapper}>
           <Text style={styles.title}>Welcome to Little Lemon</Text>
           <Image
-            source={require('../assets/images/Logo.png')}
+            source={require('../assets/Logo.png')}
             style={styles.logo}
           />
           <Text style={styles.subtitle}>

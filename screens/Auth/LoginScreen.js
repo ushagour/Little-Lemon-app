@@ -52,7 +52,7 @@ const LoginScreen = ({ navigation }) => {
         <View style={styles.wrapper}>
           <Text style={styles.title}>Welcome Back</Text>
           <Image
-            source={require('../../assets/images/Logo.png')}
+            source={require('../../assets/Logo.png')}
           />
         </View>
 

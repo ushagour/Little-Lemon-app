@@ -80,7 +80,7 @@ const Header = ({
           <Text style={styles.title}>{title}</Text>
         ) : (
           <Image 
-            source={require('../assets/images/Logo.png')} 
+            source={require('../assets/Logo.png')} 
             style={styles.logo} 
             resizeMode="contain"
             accessible={true}

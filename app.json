@@ -4,7 +4,7 @@
     "owner": "ushagour",
     "slug": "little-lemon-app",
     "description": "This application is a React Native Food App. Users will have to go through a registration process. Once they successfully complete that phase, they are redirected to a home screen where they can search and filter menu items. User can also change their preferences in Profile page",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/Logo.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#495E57"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.ushagour.littlelemonapp"
@@ -41,6 +41,7 @@
       ],
       "expo-sqlite"
     ],
+    "jsEngine": "hermes",
     "extra": {
       "eas": {
         "projectId": "ddc559d2-0ba6-4a91-a936-a9e8cc11af9c"

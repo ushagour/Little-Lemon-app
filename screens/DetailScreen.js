@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions,FlatList, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import Header from '../components/Header';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import { useFeedback } from '../context/FeedbackContext';
+import { hapticSuccess } from '../utils/haptics';
 import colors from '../config/colors';
 import { getImageUrl } from '../api/getImageUrl';
 import AppButton from '../components/Forms/AppButton';
@@ -11,6 +14,7 @@ import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import IsAuthWrapper from '../components/ui/IsAuthWrapper';
 import { formatPriceMAD } from '../utils/currency';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -18,6 +22,8 @@ const isTablet = width >= 768;
 const DetailScreen = ({ navigation, route }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { showToast, showAddedToCart } = useFeedback();
+  const { t } = useLanguage();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [selectedExtras, setSelectedExtras] = useState([]);
@@ -46,9 +52,9 @@ const DetailScreen = ({ navigation, route }) => {
    
    
   const extrasOptions = [
-    { id: 1, label: 'Extra Cheese', price: 1.00 },
-    { id: 2, label: 'Spicy Sauce', price: 0.50 },
-    { id: 3, label: 'Gluten Free', price: 1.50 }
+    { id: 1, label: t('Extra Cheese'), price: 1.00 },
+    { id: 2, label: t('Spicy Sauce'), price: 0.50 },
+    { id: 3, label: t('Gluten Free'), price: 1.50 }
   ];
 
 
@@ -68,13 +74,7 @@ const DetailScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <Header
-        onLeftPress={() => navigation.goBack()}
-        leftContent={
-          <Ionicons name="arrow-back" size={24} color={colors.white} />
-        }
-        onRightPress={()=>navigation.navigate('Profile')}
-      />
+      <ScreenHeader title={item?.name ?? t('Menu item')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
 
@@ -88,6 +88,9 @@ const DetailScreen = ({ navigation, route }) => {
               <Image
                 source={{ uri: heroUrl }}
                 style={styles.heroImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
                 onLoad={() => setImageLoading(false)}
                 onError={() => {
                   setImageLoading(false);
@@ -99,14 +102,14 @@ const DetailScreen = ({ navigation, route }) => {
               {imageError && (
                 <View style={styles.imageFallback}>
                   <MaterialIcons name="image-not-supported" size={28} color={colors.primary1} />
-                  <Text style={styles.fallbackText}>Image unavailable</Text>
+                  <Text style={styles.fallbackText}>{t('Image unavailable')}</Text>
                 </View>
               )}
             </>
           ) : (
             <View style={styles.imageFallback}>
               <MaterialIcons name="no-photography" size={28} color={colors.primary1} />
-              <Text style={styles.fallbackText}>No image available</Text>
+              <Text style={styles.fallbackText}>{t('No image available')}</Text>
             </View>
           )}
         </View>
@@ -114,7 +117,7 @@ const DetailScreen = ({ navigation, route }) => {
         {/* Info */}
         <View style={styles.content}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{item?.name ?? 'Menu Item'}</Text>
+            <Text style={styles.title}>{item?.name ?? t('Menu Item')}</Text>
             {item?.rating && (
               <View style={styles.ratingBadge}>
                 <MaterialIcons name="star" size={18} color="#FFB81C" />
@@ -127,7 +130,7 @@ const DetailScreen = ({ navigation, route }) => {
           {item?.available === false && (
             <View style={styles.unavailableBanner}>
               <MaterialIcons name="error-outline" size={18} color="#C41E3A" />
-              <Text style={styles.unavailableText}>Currently Out of Stock</Text>
+              <Text style={styles.unavailableText}>{t('Currently Out of Stock')}</Text>
             </View>
           )}
 
@@ -144,14 +147,14 @@ const DetailScreen = ({ navigation, route }) => {
 
           {/* Price and Prepare Time */}
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Price</Text>
+            <Text style={styles.priceLabel}>{t('Price')}</Text>
             <Text style={styles.price}>{formatPriceMAD(item?.price || 0)}</Text>
           </View>
 
           {item?.prepareTime && (
             <View style={styles.prepareTimeRow}>
               <MaterialIcons name="schedule" size={18} color={colors.primary1} />
-              <Text style={styles.prepareTimeLabel}>Prepare Time: </Text>
+              <Text style={styles.prepareTimeLabel}>{t('Prepare Time: ')}</Text>
               <Text style={styles.prepareTimeValue}>{item.prepareTime}</Text>
             </View>
           )}
@@ -194,7 +197,7 @@ const DetailScreen = ({ navigation, route }) => {
             ))}
                     {/* Quantity Control */}
         <View style={styles.quantitySection}>
-          <Text style={styles.SmallText}>Quantity</Text>
+          <Text style={styles.SmallText}>{t('Quantity')}</Text>
           <View style={styles.quantityControls}>
             <TouchableOpacity
               onPress={() => setQuantity(Math.max(1, quantity - 1))}
@@ -215,7 +218,7 @@ const DetailScreen = ({ navigation, route }) => {
         <Ligne style={{ marginVertical: 16 }} />
 
             <View style={styles.TotalRow}  >
-                  <Text style={[styles.SmallText]}>TOTAL</Text>
+                  <Text style={[styles.SmallText]}>{t('TOTAL')}</Text>
                   <Text style={[styles.price]}>{formatPriceMAD(TOTAL)}</Text>
            </View>
           </View>
@@ -224,7 +227,7 @@ const DetailScreen = ({ navigation, route }) => {
               
         <View style={styles.metaRow}>
           <AppButton 
-            title={isAdding ? 'Adding to Cart...' : `Add to Cart for ${formatPriceMAD(TOTAL)}`}
+            title={isAdding ? t('Adding to Cart...') : t('Add to Cart for {price}', { price: formatPriceMAD(TOTAL) })}
             color="primary2"
             buttonStyle={{width: "80%",alignItems: "center",fontFamily: "Karla-Bold"}}
             disabled={isAdding}
@@ -233,24 +236,13 @@ const DetailScreen = ({ navigation, route }) => {
               try {
                 const success = await addToCart(item, selectedExtras, quantity);
                 if (success) {
-                  Alert.alert('Success', 'Item added to cart!', [
-                        {
-                       color: colors.primary2,
-                      text: 'Go to Checkout',
-                      onPress: () => navigation.navigate('Checkout'),
-                    },
-                    {
-                      color: colors.primary1,
-                      text: 'Continue Shopping',
-                      onPress: () => navigation.goBack(),
-                    },
-                
-                  ]);
+                  hapticSuccess();
+                  showAddedToCart(item, quantity, TOTAL);
                 } else {
-                  Alert.alert('Error', 'Failed to add item to cart');
+                  showToast(t('Failed to add item to cart.'), { type: 'error' });
                 }
               } catch (error) {
-                Alert.alert('Error', 'An unexpected error occurred');
+                showToast(t('An unexpected error occurred.'), { type: 'error' });
               } finally {
                 setIsAdding(false);
               }
@@ -430,7 +422,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   quantityButton: {
-    padding: 8,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,9 +1,9 @@
 export default {
-  primary1: "#495E57",     // Ochre, main accent color
-  primary2: "#F4CE14",     // Ochre, main accent color
-  secondary1: "#EE9972",
+  primary1: "#245642",
+  primary2: "#D89A3A",
+  secondary1: "#C84C35",
 
-  secondary2: "#FBDABB",
+  secondary2: "#F4D9A4",
   secondary3: "#333333",
   secondary4: "#EDEFEE",
   secondary5: "#A1A4AD",
@@ -18,10 +18,10 @@ export default {
   danger: "#ff5252",
   warning: "#ffc107",
   success: "#4BB543",
-  textPrimary: "#495E57", // Dark charcoal, for main text
+  textPrimary: "#245642",
   textSecondary: "#EE9972", // Gray, for secondary text or hints
 
-  background: "#F9F4EF",  // Light beige, a soft background color
+  background: "#FFF8EA",
   shadowColor: "#00000020" 
    
 

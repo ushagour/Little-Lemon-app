@@ -1,7 +1,7 @@
 # Checkout Screen Implementation Guide
 
 ## Overview
-A complete checkout system has been implemented for the Little Lemon app, allowing users to add items to a cart and complete orders with delivery information.
+A complete checkout system has been implemented for the Marrakech Bites app, allowing users to add items to a cart and complete orders with delivery information.
 
 ## Files Created/Modified
 

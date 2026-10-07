@@ -1,12 +1,14 @@
 import { StyleSheet, View, Text } from 'react-native';
 import AppButton from './Forms/AppButton';
 import colors from '../config/colors';
+import { useLanguage } from '../context/LanguageContext';
 
 const Footer = ({ formIsValid = false, onPress }) => {
+  const { t } = useLanguage();
   return (
     <View style={styles.footer}>
       <AppButton
-        title="Next"
+        title={t('Next')}
         onPress={onPress}
         disabled={!formIsValid}
         buttonStyle={[styles.button, !formIsValid && styles.buttonDisabled]}

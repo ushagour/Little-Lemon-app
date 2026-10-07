@@ -10,6 +10,9 @@ import { useFonts } from './hooks/useFonts';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
+import { FeedbackProvider } from './context/FeedbackContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 
 export default function App() {
@@ -28,18 +31,30 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View  style={{ flex: 1 }}>
-        <StatusBar style="light" />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  const { isRTL } = useLanguage();
+
+  return (
+      <GestureHandlerRootView style={[{ flex: 1 }, { direction: isRTL ? 'rtl' : 'ltr' }]}>
+        <StatusBar style="dark" />
         <AuthProvider>
           <OrderProvider>
             <CartProvider>
-              <SQLiteProvider databaseName="little_lemon.db">
-                <AppNavigator />
-              </SQLiteProvider>
+              <FeedbackProvider>
+                <SQLiteProvider databaseName="little_lemon.db">
+                  <AppNavigator />
+                </SQLiteProvider>
+              </FeedbackProvider>
             </CartProvider>
           </OrderProvider>
         </AuthProvider>
-      </View>
-    </SafeAreaProvider>
+      </GestureHandlerRootView>
   );
 }

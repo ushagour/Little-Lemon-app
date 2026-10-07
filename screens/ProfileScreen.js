@@ -1,760 +1,322 @@
-import React, { useState, useEffect } from 'react';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Platform, ToastAndroid, TextInput, LinearGradient } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import AppButton from '../components/Forms/AppButton';
-import colors from '../config/colors';
-import AppCheckbox from '../components/Forms/AppCheckbox';
 import { MaskedTextInput } from 'react-native-mask-text';
-import Header from '../components/Header';
-import { useAuth } from '../hooks/useAuth';
-import { useOrders } from '../hooks/useOrders';
-import IsAuthWrapper from '../components/ui/IsAuthWrapper';
-import NotificationCard from '../components/ui/NotificationCard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSQLiteContext } from 'expo-sqlite';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import AppButton from '../components/Forms/AppButton';
+import TextField from '../components/Forms/TextField';
+import IsAuthWrapper from '../components/ui/IsAuthWrapper';
+import { SettingsGroup, SettingsRow } from '../components/ui/SettingsRow';
+import { useAuth } from '../hooks/useAuth';
+import { useFeedback } from '../context/FeedbackContext';
 import { syncMenuDatabase } from '../database/queries';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import getEnvVars from '../config/environment';
+import { navigationRef } from '../navigation/navigationRef';
+import { colors, layout, radii, shadows, spacing, typography } from '../config/theme';
+import { LANGUAGES, useLanguage } from '../context/LanguageContext';
+
+const PREF_KEYS = [
+  ['prefOrderStatus', 'Order status changes'],
+  ['prefPasswordChanges', 'Password changes'],
+  ['prefSpecialOffers', 'Special offers'],
+  ['prefNewsletter', 'Newsletter'],
+];
+
+function LanguageRow() {
+  const { language, setLanguage, t } = useLanguage();
+
+  return (
+    <SettingsRow
+      icon="language-outline"
+      label={t('Language')}
+      value={t(LANGUAGES.find(({ code }) => code === language)?.label || 'English')}
+      onPress={() => Alert.alert(t('Choose language'), undefined, LANGUAGES.map(({ code, label }) => ({
+        text: t(label),
+        onPress: () => setLanguage(code),
+      })))}
+    />
+  );
+}
+
+const fromUser = (user) => ({
+  firstName: user?.firstName || '',
+  lastName: user?.lastName || '',
+  email: user?.email || '',
+  phone: user?.phone || '',
+  avatar: user?.avatar || null,
+  prefOrderStatus: Boolean(user?.prefOrderStatus),
+  prefPasswordChanges: Boolean(user?.prefPasswordChanges),
+  prefSpecialOffers: Boolean(user?.prefSpecialOffers),
+  prefNewsletter: Boolean(user?.prefNewsletter),
+});
 
 const ProfileScreen = ({ navigation }) => {
   const { user, updateUser, logout, isGuest } = useAuth();
-  const { orders,unreadCount } = useOrders();
+  const { showToast } = useFeedback();
+  const { t } = useLanguage();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
 
-  const [profile, setProfile] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    avatar: null,
-    prefOrderStatus: false,
-    prefPasswordChanges: false,
-    prefSpecialOffers: false,
-    prefNewsletter: false,
-  });
-
-  const showToast = (message) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert('Notice', message);
-    }
-  };
+  const [profile, setProfile] = useState(fromUser(user));
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setProfile({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        avatar: user.avatar || null,
-        prefOrderStatus: Boolean(user.prefOrderStatus),
-        prefPasswordChanges: Boolean(user.prefPasswordChanges),
-        prefSpecialOffers: Boolean(user.prefSpecialOffers),
-        prefNewsletter: Boolean(user.prefNewsletter),
-      });
-    }
+    setProfile(fromUser(user));
   }, [user]);
 
-  const Discard = () => {
-    if (user) {
-      setProfile({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        avatar: user.avatar || null,
-        prefOrderStatus: Boolean(user.prefOrderStatus),
-        prefPasswordChanges: Boolean(user.prefPasswordChanges),
-        prefSpecialOffers: Boolean(user.prefSpecialOffers),
-        prefNewsletter: Boolean(user.prefNewsletter),
-      });
-    }
-  };
+  const original = useMemo(() => fromUser(user), [user]);
+  const dirty = JSON.stringify(original) !== JSON.stringify(profile);
+  const phoneRaw = (profile.phone || '').replace(/\D/g, '');
+  const phoneError = phoneRaw.length > 0 && phoneRaw.length !== 12;
+  const initials = `${(profile.firstName[0] || '').toUpperCase()}${(profile.lastName[0] || '').toUpperCase()}`;
+  const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+
+  const update = (key) => (value) => setProfile((p) => ({ ...p, [key]: value }));
 
   const pickImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.granted === false) {
-        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        showToast(t('Allow photo access to choose a picture.'), { type: 'error' });
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.5,
       });
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0].uri;
-        setProfile((p) => ({ ...p, avatar: selectedImage }));
+      if (!result.canceled && result.assets?.length) {
+        update('avatar')(result.assets[0].uri);
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+    } catch {
+      showToast(t('Failed to pick image.'), { type: 'error' });
     }
   };
 
-  const removeAvatar = () => {
-    Alert.alert('Remove Avatar', 'Remove your profile picture?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => setProfile((p) => ({ ...p, avatar: null })) },
+  const onAvatarPress = () => {
+    if (!profile.avatar) return pickImage();
+    Alert.alert(t('Profile picture'), undefined, [
+      { text: t('Choose new photo'), onPress: pickImage },
+      { text: t('Remove photo'), style: 'destructive', onPress: () => update('avatar')(null) },
+      { text: t('Cancel'), style: 'cancel' },
     ]);
   };
 
-  const phoneRaw = (profile.phone || '').replace(/\D/g, '');
-  const phoneIsValid = phoneRaw.length === 12; // +212 (3 digits) + 9 digits for Moroccan number
-  const initials = `${(profile.firstName?.[0] || '').toUpperCase()}${(profile.lastName?.[0] || '').toUpperCase()}`;
-  const hasData = Boolean(profile.firstName || profile.email);
+  const save = async () => {
+    setSaving(true);
+    try {
+      const ok = await updateUser({ ...profile, isUserOnboarded: user?.isUserOnboarded === true });
+      showToast(ok ? t('Profile updated.') : t('Unable to save your profile.'), { type: ok ? 'success' : 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  // For guest users, show a message requiring registration to complete ordering
+  const handleLogout = () => {
+    Alert.alert(t('Log out'), t('Are you sure you want to log out?'), [
+      { text: t('Cancel'), style: 'cancel' },
+      {
+        text: t('Log out'),
+        style: 'destructive',
+        onPress: async () => {
+          const ok = await logout();
+          if (ok) {
+            navigationRef.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
+          } else {
+            showToast(t('Failed to log out. Please try again.'), { type: 'error' });
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const result = await syncMenuDatabase(db, getEnvVars.API_URL);
+      if (result.success) {
+        showToast(t('Menu synced · {count} items.', { count: result.count }), { type: 'success' });
+        navigation.navigate('Home');
+      } else {
+        showToast(result.error || t('Sync failed.'), { type: 'error' });
+      }
+    } catch (e) {
+      showToast(t('Failed to sync the menu.'), { type: 'error' });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (isGuest) {
     return (
-      <View style={styles.container}>
-        <Header
-          leftContent={
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-          }
-        />
-        <View style={styles.ProfileWrapper}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.ProfileWrapperTitle}>Guest User</Text>
-            <IsAuthWrapper navigation={navigation} />
-          </ScrollView>
+      <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+        <Text style={[styles.title, styles.pad]}>{t('Profile')}</Text>
+        <IsAuthWrapper navigation={navigation} />
+        <View style={styles.pad}>
+          <SettingsGroup title={t('Settings')}>
+            <LanguageRow />
+          </SettingsGroup>
         </View>
       </View>
     );
   }
 
-  const save = async () => {
-    const toSave = { ...profile, isUserOnboarded: user?.isUserOnboarded === true };
-    const success = await updateUser(toSave);
-    if (success) {
-      showToast('Profile updated successfully');
-      navigation.setParams(toSave);
-    } else {
-      Alert.alert('Error', 'Unable to save your profile. Please try again.');
-    }
-  };
-
-  const handelLogout = async () => {
-    Alert.alert(
-      'Confirm Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            const success = await logout();
-            if (success) {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Onboarding' }],
-              });
-            } else{
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleInitDB = async () => {
-    Alert.alert(
-      'Initialize Database',
-      'This will sync the database with the latest schema and reload menu data. Continue?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Sync Now',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (!db) {
-                Alert.alert('Error', 'Database not available');
-                return;
-              }
-
-              showToast('Syncing database...');
-              
-              const result = await syncMenuDatabase(db, getEnvVars.API_URL);
-              
-              if (result.success) {
-                showToast(`Database synced! ${result.count} items loaded.`);
-                
-                // Navigate back to home to refresh the menu
-                setTimeout(() => {
-                  navigation.navigate('Home');
-                }, 1000);
-              } else {
-                Alert.alert('Sync Failed', result.error || 'Unknown error occurred');
-              }
-            } catch (error) {
-              console.error('DB Sync Error:', error);
-              Alert.alert('Error', 'Failed to sync database: ' + error.message);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   return (
-    <View style={styles.container}>
-      <Header
-        leftContent={
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-        }
-        rightContent={
-          <View style={styles.notificationIconWrapper}>
-            <Ionicons name="notifications" size={26} color={colors.primary1} />
-            {unreadCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-              </View>
-            )}
-          </View>
-        }
-      />
-
-      <View style={styles.ProfileWrapper}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          
-          {/* Order Notifications Section */}
-          {orders.length > 0 && (
-         <NotificationCard  />
-          )}
-
-          {/* Profile Header Card */}
-          <View style={styles.profileHeaderCard}>
-            <View style={styles.profileHeaderContent}>
-              <Text style={styles.ProfileWrapperTitle}>Personal Information</Text>
-              <Text style={styles.subtitleText}>Manage your account details and preferences</Text>
-            </View>
-          </View>
-
-          {/* Avatar Section Card */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="account-circle" size={24} color={colors.primary1} />
-              <Text style={styles.sectionTitle}>Profile Picture</Text>
-            </View>
-          <View style={styles.row}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing.md, paddingBottom: layout.tabBarHeight + spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(300)} style={styles.identity}>
+          <Pressable onPress={onAvatarPress} accessibilityRole="button" accessibilityLabel={t('Change profile picture')}>
             {profile.avatar ? (
-              <Image source={typeof profile.avatar === 'string' ? { uri: profile.avatar } : profile.avatar} style={styles.avatar} />
+              <Image source={{ uri: profile.avatar }} style={styles.avatar} contentFit="cover" />
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                {initials ?
-                
-                <Text style={styles.avatarInitials}>{initials}</Text>
-                
-                :
-                <Ionicons name="person-circle" size={80} color={colors.primary1} />
-                }
-              
-
-
-                </View>
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                {initials ? (
+                  <Text style={styles.initials}>{initials}</Text>
+                ) : (
+                  <Ionicons name="person" size={40} color={colors.brand} />
+                )}
+              </View>
             )}
-            <View style={styles.avatarButtons}>
-              <AppButton
-                children={<MaterialIcons name="photo-library" size={20} color={colors.white} />}
-                onPress={pickImage}
-                color="primary1"
+            <View style={styles.cameraBadge}>
+              <Ionicons name="camera" size={14} color={colors.textOnBrand} />
+            </View>
+          </Pressable>
+          <Text style={styles.name}>{fullName || t('Your profile')}</Text>
+          {profile.email ? <Text style={styles.email}>{profile.email}</Text> : null}
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(60).duration(300)}>
+          <SettingsGroup title={t('Personal details')}>
+            <View style={styles.form}>
+              <TextField label={t('First name')} value={profile.firstName} onChangeText={update('firstName')} />
+              <TextField label={t('Last name')} value={profile.lastName} onChangeText={update('lastName')} />
+              <TextField
+                label={t('Email')}
+                value={profile.email}
+                onChangeText={update('email')}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
-              <AppButton
-                children={<MaterialIcons name="delete" size={20} color={colors.white} />}
-                onPress={removeAvatar}
-                color="primary2"
+              <View>
+                <Text style={styles.fieldLabel}>{t('Phone')}</Text>
+                <View style={[styles.phoneField, phoneError && styles.phoneError]}>
+                  <MaskedTextInput
+                    mask="+212 [6-9]99 999-9999"
+                    value={profile.phone}
+                    onChangeText={update('phone')}
+                    placeholder="+212 600 000-0000"
+                    placeholderTextColor={colors.textSubtle}
+                    keyboardType="phone-pad"
+                    style={styles.phoneInput}
+                  />
+                </View>
+                {phoneError ? <Text style={styles.errorText}>{t('Enter a valid Moroccan number (+212 and 9 digits).')}</Text> : null}
+              </View>
+
+              {dirty ? (
+                <Animated.View entering={FadeInDown.duration(200)}>
+                  <AppButton
+                    variant="primary"
+                    title={t('Save changes')}
+                    onPress={save}
+                    loading={saving}
+                    disabled={phoneError}
+                  />
+                  <AppButton variant="text" title={t('Discard')} onPress={() => setProfile(original)} />
+                </Animated.View>
+              ) : null}
+            </View>
+          </SettingsGroup>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(120).duration(300)}>
+          <SettingsGroup title={t('Email notifications')}>
+            {PREF_KEYS.map(([key, label], i) => (
+              <SettingsRow
+                key={key}
+                label={t(label)}
+                switchValue={profile[key]}
+                onSwitchChange={update(key)}
+                last={i === PREF_KEYS.length - 1}
               />
-            </View>
-          </View>
-          </View>
+            ))}
+          </SettingsGroup>
+        </Animated.View>
 
-          {/* Personal Details Card */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="person" size={24} color={colors.primary1} />
-              <Text style={styles.sectionTitle}>Personal Details</Text>
-            </View>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="person-outline" size={20} color={colors.primary1} style={styles.inputIcon} />
-                <TextInput
-                  value={profile.firstName}
-                  placeholder="First Name"
-                  onChangeText={(t) => setProfile((p) => ({ ...p, firstName: t }))}
-                  style={styles.inputWithIcon}
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </View>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="badge" size={20} color={colors.primary1} style={styles.inputIcon} />
-                <TextInput
-                  value={profile.lastName}
-                  placeholder="Last Name"
-                  onChangeText={(t) => setProfile((p) => ({ ...p, lastName: t }))}
-                  style={styles.inputWithIcon}
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </View>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="email" size={20} color={colors.primary1} style={styles.inputIcon} />
-                <TextInput
-                  value={profile.email}
-                  placeholder="Email Address"
-                  onChangeText={(t) => setProfile((p) => ({ ...p, email: t }))}
-                  style={styles.inputWithIcon}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </View>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="phone" size={20} color={colors.primary1} style={styles.inputIcon} />
-                <MaskedTextInput
-                  mask="+212 [6-9]99 999-9999"
-                  onChangeText={(masked) => setProfile((p) => ({ ...p, phone: masked }))}
-                  placeholder="+212 600 000-0000"
-                  style={styles.inputWithIcon}
-                  keyboardType="phone-pad"
-                  value={profile.phone}
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </View>
-
-            {!phoneIsValid && phoneRaw.length > 0 ? <Text style={styles.errorText}>⚠️ Enter a valid Moroccan phone number (+212 + 9 digits).</Text> : null}
-            {!hasData && <Text style={styles.noData}>No profile data provided.</Text>}
-          </View>
-          </View>
-
-          {/* Notifications Preferences Card */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="notifications-active" size={24} color={colors.primary1} />
-              <Text style={styles.sectionTitle}>Email Notifications</Text>
-            </View>
-          <View style={styles.checkBoxContainer}>
-            <AppCheckbox
-              checked={profile.prefOrderStatus}
-              onChange={(val) => setProfile((p) => ({ ...p, prefOrderStatus: val }))}
-              style={{ tintColors: { true: colors.primary1, false: '#BFC9CC' } }}
-              label="Order status changes"
+        <Animated.View entering={FadeInDown.delay(180).duration(300)}>
+          <SettingsGroup title={t('Settings')}>
+            <LanguageRow />
+            <SettingsRow icon="lock-closed-outline" label={t('Change password')} onPress={() => navigation.getParent()?.navigate('ChangePassword')} />
+            <SettingsRow
+              icon="sync-outline"
+              label={t('Sync database')}
+              value={syncing ? t('Working…') : undefined}
+              onPress={handleSync}
+              last
             />
-            <AppCheckbox
-              checked={profile.prefPasswordChanges}
-              onChange={(val) => setProfile((p) => ({ ...p, prefPasswordChanges: val }))}
-              style={{ tintColors: { true: colors.primary1, false: '#BFC9CC' } }}
-              label="Password changes"
-            />
-            <AppCheckbox
-              checked={profile.prefSpecialOffers}
-              onChange={(val) => setProfile((p) => ({ ...p, prefSpecialOffers: val }))}
-              style={{ tintColors: { true: colors.primary1, false: '#BFC9CC' } }}
-              label="Special offers"
-            />
-            <AppCheckbox
-              checked={profile.prefNewsletter}
-              onChange={(val) => setProfile((p) => ({ ...p, prefNewsletter: val }))}
-              style={{ tintColors: { true: colors.primary1 } }}
-              label="Newsletter"
-            />
-          </View>
-          </View>
+          </SettingsGroup>
+        </Animated.View>
 
-       {/* Save/Discard Footer */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-            <AppButton
-              title="Discard"
-              onPress={Discard}
-              color="white"
-              disabled={!phoneIsValid}
-              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-            />
-            <AppButton
-              title="Save"
-              onPress={save}
-              color="primary1"
-              disabled={!phoneIsValid}
-              textStyle={[styles.TextButtons, { color: colors.white }]}
-              buttonStyle={[styles.saveButton, { marginRight: 10, borderColor: colors.primary1, borderWidth: 1 }]}
-            />
-          </View>  
-          </View>  
-
-          {/* Quick Actions Card */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="settings" size={24} color={colors.primary1} />
-              <Text style={styles.sectionTitle}>Account Actions</Text>
-            </View>
-
-          <AppButton 
-            title="Logout" 
-            onPress={handelLogout} 
-            color="primary2" 
-            buttonStyle={styles.LogoutButton} 
-            textStyle={styles.TextButtons}
-            icon={<MaterialIcons name="logout" size={20} color={colors.primary1} style={{ marginRight: 8 }} />}
-          />
-          
-          <AppButton 
-            title="Change Password" 
-            onPress={() => navigation.navigate('ChangePassword')} 
-            color="danger"
-            buttonStyle={styles.changePasswordButton} 
-            textStyle={[styles.TextButtons, { color: colors.white }]} 
-          />
-
-          <AppButton 
-            title="Sync Database" 
-            onPress={handleInitDB} 
-            color="secondary3"
-            buttonStyle={styles.initDBButton} 
-            textStyle={[styles.TextButtons, { color: colors.white }]} 
-          />
-          </View>
-          
-           
-        </ScrollView>
-      </View>
-    </View>
+        <AppButton variant="text" title={t('Log out')} onPress={handleLogout} textStyle={styles.logoutText} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'flex-start',
-  },
-  backButton: {
-    backgroundColor: colors.primary1,
-    borderRadius: 8,
-    padding: 4,
-  },
-  notificationIconWrapper: {
-    position: 'relative',
-    padding: 8,
-  },
-  notificationBadge: {
+  container: { flex: 1, backgroundColor: colors.background },
+  pad: { paddingHorizontal: spacing.md },
+  content: { paddingHorizontal: spacing.md },
+  title: { ...typography.h1, color: colors.text },
+  identity: { alignItems: 'center', marginBottom: spacing.lg },
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  avatarPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentSoft },
+  initials: { ...typography.h1, color: colors.brand },
+  cameraBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  notificationBadgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  profileHeaderCard: {
-    backgroundColor: 'rgba(73, 94, 87, 0.05)',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary1,
-  },
-  profileHeaderContent: {
-    gap: 4,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Karla-Regular',
-    marginTop: 4,
-  },
-  sectionCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    fontFamily: 'MarkaziText-Medium',
-    color: colors.textPrimary,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    fontFamily: 'MarkaziText-Medium',
-    color: colors.textPrimary,
-  },
-  avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 16,
-    marginRight: 16,
+    right: 0,
+    bottom: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.secondary7,
-    borderWidth: 3,
-    borderColor: colors.primary1,
-    shadowColor: colors.primary1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: colors.brand,
+    borderWidth: 2,
+    borderColor: colors.background,
   },
-  avatarInitials: {
-    color: colors.primary1,
-    fontSize: 32,
-    fontWeight: '700',
-  },
-  ProfileWrapperTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    fontFamily: 'MarkaziText-Medium',
-    color: colors.textPrimary,
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: 'MarkaziText-Medium',
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 16,
-    marginRight: 16,
-    borderWidth: 3,
-    borderColor: colors.primary1,
-    shadowColor: colors.primary1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  ProfileWrapper: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: 'transparent',
-    padding: 16,
-  },
-  titleSmall: {
-    fontSize: 12,
-    color: colors.primary1,
-    fontFamily: 'bold',
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  avatarButtons: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 10,
-  },
-  inputContainer: {
-    width: '100%',
-  },
-  label: {
-    fontWeight: '600',
-    width: 90,
-    color: '#333',
-    fontSize: 16,
-  },
-  noData: {
-    color: '#999',
-    marginTop: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  inputRow: {
-    marginBottom: 14,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 10,
+  name: { ...typography.h2, color: colors.text, marginTop: spacing.md },
+  email: { ...typography.small, color: colors.textMuted },
+  form: { padding: spacing.md },
+  fieldLabel: { ...typography.small, fontFamily: 'Karla-Bold', color: colors.text, marginBottom: spacing.xs },
+  phoneField: {
+    minHeight: layout.touchTarget,
+    justifyContent: 'center',
+    borderRadius: radii.md,
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 12,
-    width: '100%',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  inputWithIcon: {
-    flex: 1,
-    height: 48,
-    fontSize: 16,
-    color: '#333',
-    fontFamily: 'Karla-Regular',
-  },
-  input: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 10,
-    height: 48,
-    paddingVertical: 12,
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 14,
-    width: '100%',
-    fontSize: 16,
-    color: '#333',
-    fontFamily: 'Karla-Regular',
-  },
-  checkBoxContainer: {
-    gap: 8,
-  },
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  checkMark: {
-    color: '#fff',
-    fontSize: 14,
-    lineHeight: 14,
-  },
-  checkLabel: {
-    fontSize: 16,
-    marginLeft: 8,
-    fontFamily: 'MarkaziText-Medium',
-    color: '#333',
-  },
-  errorText: {
-    color: colors.danger,
-    marginTop: 4,
-    marginBottom: 8,
-    fontSize: 13,
-    fontFamily: 'Karla-Regular',
-  },
-  LogoutButton: {
-    marginTop: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  changePasswordButton: {
-    marginTop: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#DC3545',
-    shadowColor: '#DC3545',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  initDBButton: {
-    marginTop: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFA500',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  discardButton: {
-    flex: 1,
-    borderColor: colors.primary1,
-    borderWidth: 1.5,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginHorizontal: 6,
-  },
-  TextButtons: {
-    fontWeight: '600',
-    fontSize: 16,
-    fontFamily: 'Karla-Bold',
-  },
-  footerWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    gap: 4,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  
- 
+  phoneError: { borderColor: colors.danger },
+  phoneInput: { ...typography.body, color: colors.text, minHeight: layout.touchTarget },
+  errorText: { ...typography.caption, color: colors.danger, marginTop: spacing.xs },
+  logoutText: { color: colors.textMuted, ...typography.small },
 });

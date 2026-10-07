@@ -1,4 +1,4 @@
-# Little Lemon App
+# Marrakech Bites
 
 A small React Native demo app for a restaurant-style onboarding and profile flow. The app shows a compact header, onboarding screen, profile editing (with masked phone input), and a reusable button component.
 

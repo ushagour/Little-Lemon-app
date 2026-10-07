@@ -1,200 +1,91 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Alert, Image, Pressable } from 'react-native';
-import colors from '../../config/colors';
-import Hero from '../../components/Hero';
-import Label from '../../components/Forms/Label';
-import { ScrollView } from 'react-native-gesture-handler';
-import AppTextInput from '../../components/Forms/AppTextInput';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import AuthLayout from '../../components/auth/AuthLayout';
+import TextField from '../../components/Forms/TextField';
 import AppButton from '../../components/Forms/AppButton';
 import { useAuth } from '../../hooks/useAuth';
+import { useFeedback } from '../../context/FeedbackContext';
+import { spacing } from '../../config/theme';
+import { useLanguage } from '../../context/LanguageContext';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const LoginScreen = ({ navigation }) => {
   const { login } = useAuth();
+  const { showToast } = useFeedback();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [emailIsValid, setEmailIsValid] = useState(false);
-  const [passwordIsValid, setPasswordIsValid] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const passwordRef = useRef(null);
 
-  // Validate email
-  useEffect(() => {
-    const emailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    setEmailIsValid(emailValid);
-    const passValid = password.length >= 6;
-    setPasswordIsValid(passValid);
-  }, [email, password]);
+  const emailError = touched.email && !EMAIL_RE.test(email) ? t('Enter a valid email address.') : null;
+  const passwordError = touched.password && password.length < 6 ? t('At least 6 characters.') : null;
+  const valid = EMAIL_RE.test(email) && password.length >= 6;
 
   const handleLogin = async () => {
-    if (!emailIsValid) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address');
+    if (!valid) {
+      setTouched({ email: true, password: true });
+      showToast(t('Please fix the highlighted fields.'), { type: 'error' });
       return;
     }
-    if (!passwordIsValid) {
-      Alert.alert('Invalid Password', 'Password must be at least 6 characters');
-      return;
-    }
-
-    // Simulate login - in real app, this would call an API
-    const loginData = { email, password };
-    const success = await login(loginData);
-    
-    if (success) {
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-    } else {
-      Alert.alert('Error', 'Failed to login. Please try again.');
+    setSubmitting(true);
+    try {
+      const success = await login({ email, password });
+      if (success) {
+        navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        showToast(t('Failed to log in. Please try again.'), { type: 'error' });
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Hero />
+    <AuthLayout title={t('Welcome back')} subtitle={t('Log in to order your favourites.')}>
+      <TextField
+        label={t('Email')}
+        value={email}
+        onChangeText={setEmail}
+        onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+        error={emailError}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        placeholder={t('you@example.com')}
+      />
+      <TextField
+        ref={passwordRef}
+        label={t('Password')}
+        value={password}
+        onChangeText={setPassword}
+        onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+        error={passwordError}
+        secureTextEntry
+        autoComplete="password"
+        textContentType="password"
+        returnKeyType="go"
+        onSubmitEditing={handleLogin}
+        placeholder={t('Your password')}
+      />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.wrapper}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Image
-            source={require('../../assets/Logo.png')}
-          />
-        </View>
+      <AppButton variant="primary" title={t('Log in')} onPress={handleLogin} loading={submitting} />
 
-        <Label text="Email" required={true} />
-        <AppTextInput
-          style={[styles.input, !emailIsValid && email.length > 0 ? styles.inputError : null]}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholder="Enter your email"
-        />
-        {!emailIsValid && email.length > 0 && (
-          <Text style={styles.errorText}>Please enter a valid email address.</Text>
-        )}
-
-        <Label text="Password" required={true} />
-        <AppTextInput
-          style={[styles.input, !passwordIsValid && password.length > 0 ? styles.inputError : null]}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={true}
-          placeholder="Enter your password"
-        />
-        {!passwordIsValid && password.length > 0 && (
-          <Text style={styles.errorText}>Password must be at least 6 characters.</Text>
-        )}
-
-        <AppButton
-          title="Login"
-          onPress={handleLogin}
-          color="primary1"
-          disabled={!emailIsValid || !passwordIsValid}
-          buttonStyle={styles.loginButton}
-          textStyle={styles.buttonText}
-        />
-
-        <View style={styles.linkContainer}>
-          <Text style={styles.linkText}>Don't have an account? </Text>
-          <Pressable onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Sign Up</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.linkContainer}>
-          <Pressable onPress={() => navigation.navigate('Onboarding')}>
-            <Text style={styles.link}>Continue as Guest</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      <View style={styles.copyright}>
-        <Text style={styles.copyrightText}>© 2026 Little Lemon. All rights reserved.</Text>
+      <View style={styles.secondary}>
+        <AppButton variant="secondary" title={t('Create account')} onPress={() => navigation.navigate('Register')} />
+        <AppButton variant="text" title={t('Continue as guest')} onPress={() => navigation.navigate('Onboarding')} />
       </View>
-    </View>
+    </AuthLayout>
   );
 };
 
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: colors.secondary5,
-  },
-  wrapper: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 10,
-    color: colors.textPrimary,
-    fontFamily: 'MarkaziText-Medium',
-  },
-  logo: {
-    width: 50,
-    height: 50,
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: colors.inputBackground || '#F5F5F5',
-    borderColor: colors.white,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 18,
-    color: colors.textPrimary || '#333',
-    fontFamily: 'Karla-Regular',
-    marginBottom: 15,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  errorText: {
-    color: colors.danger,
-    marginTop: -10,
-    marginBottom: 15,
-    fontSize: 14,
-  },
-  loginButton: {
-    marginTop: 20,
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 6,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  linkText: {
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  link: {
-    fontSize: 14,
-    color: colors.primary2,
-    fontWeight: '600',
-  },
-  copyright: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    backgroundColor: colors.white,
-  },
-  copyrightText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    textAlign: 'center',
-  },
+  secondary: { marginTop: spacing.md },
 });

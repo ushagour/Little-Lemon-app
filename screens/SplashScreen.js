@@ -1,18 +1,20 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ImageBackground } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 const SplashScreen = ({ onGetStarted = () => {} }) => {
+  const { t } = useLanguage();
   return (
    <ImageBackground
         blurRadius={15}
         style={styles.background}
-        source={require("../assets/Lemon-dessert.png")}
+        source={require("../assets/Hero.png")}
       >
         <View style={styles.logoContainer}>
           <Image style={styles.logo} source={require("../assets/Logo.png")} />
         </View>
         <View style={styles.splashContainer}>
-          <Text style={styles.copyrightText}> V1.0 Copyright © 2025 </Text>
+          <Text style={styles.copyrightText}>{t('V1.0 Copyright © 2025')}</Text>
         </View>
       </ImageBackground>
   );

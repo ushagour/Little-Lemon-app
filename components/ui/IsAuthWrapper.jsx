@@ -3,25 +3,27 @@ import React from 'react'
 import colors from '../../config/colors';
 import AppButton from '../Forms/AppButton';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useLanguage } from '../../context/LanguageContext';
 
 const IsAuthWrapper = ({ navigation }) => {
+  const { t } = useLanguage();
   return (
     <View style={styles.authPromptContainer}>
               <MaterialIcons name="lock-outline" size={48} color={colors.primary1} />
-              <Text style={styles.authPromptTitle}>Sign in Required</Text>
+              <Text style={styles.authPromptTitle}>{t('Sign in Required')}</Text>
               <Text style={styles.authPromptText}>
-                Please sign in or create an account to add items to your cart
+                {t('Please sign in or create an account to add items to your cart')}
               </Text>
               <View style={styles.authButtonsContainer}>
                 <AppButton 
-                  title="Sign In"
+                  title={t('Sign In')}
                   color="primary1"
                   textStyle={{ color: colors.white }}
                   buttonStyle={{ flex: 1, marginRight: 8 }}
                   onPress={() => navigation.navigate('Login')}
                 />
                 <AppButton 
-                  title="Register"
+                  title={t('Register')}
                   color="primary2"
                   textStyle={{ color: colors.black }}
                   buttonStyle={{ flex: 1, marginLeft: 8 }}

@@ -1,7 +1,7 @@
 # Navigation Workflow
 
 ## Overview
-The Little Lemon app uses a unified stack navigation system that handles both authentication and main application screens in a single navigator. The navigation dynamically switches based on the user's authentication state.
+The Marrakech Bites app uses a unified stack navigation system that handles both authentication and main application screens in a single navigator. The navigation dynamically switches based on the user's authentication state.
 
 ## Architecture
 

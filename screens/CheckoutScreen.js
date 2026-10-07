@@ -8,10 +8,11 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../components/Header';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import { useFeedback } from '../context/FeedbackContext';
+import { hapticSuccess } from '../utils/haptics';
 import colors from '../config/colors';
 import AppButton from '../components/Forms/AppButton';
 import Ligne from '../components/ui/Ligne';
@@ -20,6 +21,7 @@ import { useCart } from '../hooks/useCart';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../hooks/useAuth';
 import { formatPriceMAD } from '../utils/currency';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -28,6 +30,8 @@ const CheckoutScreen = ({ navigation }) => {
   const { cartItems, subtotal, tax, total, removeFromCart, updateQuantity, clearCart } = useCart();
   const { addOrder } = useOrders();
   const { isGuest } = useAuth();
+  const { showToast } = useFeedback();
+  const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -50,31 +54,22 @@ const CheckoutScreen = ({ navigation }) => {
   const handlePlaceOrder = async () => {
     // Check if user is guest - prevent checkout
     if (isGuest) {
-      Alert.alert(
-        'Registration Required',
-        'Please complete your registration to place an order.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Register Now',
-            onPress: () => navigation.navigate('Onboarding'),
-          },
-        ]
-      );
+      showToast(t('Register to place an order.'), {
+        action: { label: t('Register'), onPress: () => navigation.navigate('Register') },
+      });
       return;
     }
 
-    // Validation
     if (!deliveryAddress.trim()) {
-      Alert.alert('Missing Information', 'Please enter a delivery address');
+      showToast(t('Please enter a delivery address.'), { type: 'error' });
       return;
     }
     if (!phoneNumber.trim()) {
-      Alert.alert('Missing Information', 'Please enter a phone number');
+      showToast(t('Please enter a phone number.'), { type: 'error' });
       return;
     }
     if (cartItems.length === 0) {
-      Alert.alert('Empty Cart', 'Please add items to your order');
+      showToast(t('Your cart is empty.'), { type: 'error' });
       return;
     }
 
@@ -96,22 +91,12 @@ const CheckoutScreen = ({ navigation }) => {
       };
       await addOrder(orderData);
 
-      // Order placed successfully
-      Alert.alert(
-        'Order Placed Successfully!',
-        `Your order total is ${formatPriceMAD(total)}.\n\nDelivery to: ${deliveryAddress}\n\nCheck your notifications on the profile button for updates!`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              clearCart();
-              navigation.navigate('Home');
-            },
-          },
-        ]
-      );
+      hapticSuccess();
+      clearCart();
+      showToast(t('Order placed · {price}', { price: formatPriceMAD(total) }), { type: 'success' });
+      navigation.navigate('Main', { screen: 'Orders' });
     } catch (error) {
-      Alert.alert('Error', 'Failed to place order. Please try again.');
+      showToast(t('Failed to place order. Please try again.'), { type: 'error' });
     } finally {
       setIsProcessing(false);
     }
@@ -124,7 +109,7 @@ const CheckoutScreen = ({ navigation }) => {
         <Text style={styles.itemDescription}>{item.category}</Text>
         {item.extras && item.extras.length > 0 && (
           <Text style={styles.extrasText}>
-            Extras: {item.extras.map(e => e.label).join(', ')}
+            {t('Extras')}: {item.extras.map(e => e.label).join(', ')}
           </Text>
         )}
         <Text style={styles.itemPrice}>{formatPriceMAD(item.price)}</Text>
@@ -161,19 +146,16 @@ const CheckoutScreen = ({ navigation }) => {
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
-        <Header
-          onLeftPress={() => navigation.goBack()}
-          leftContent={<Ionicons name="arrow-back" size={24} color={colors.white} />}
-        />
+        <ScreenHeader title={t('Cart')} onBack={() => navigation.goBack()} />
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={64} color={colors.secondary5} />
-          <Text style={styles.emptyTitle}>Your Cart is Empty</Text>
-          <Text style={styles.emptyDescription}>Add items to your order to continue</Text>
+          <Text style={styles.emptyTitle}>{t('Your Cart is Empty')}</Text>
+          <Text style={styles.emptyDescription}>{t('Add items to your order to continue')}</Text>
           
           <AppButton
-            title="Continue Shopping"
+            title={t('Continue Shopping')}
             color="primary2"
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('Main', { screen: 'Home' })}
           />
         </View>
       </View>
@@ -182,17 +164,12 @@ const CheckoutScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header
-        onLeftPress={() => navigation.goBack()}
-        leftContent={<Ionicons name="arrow-back" size={24} color={colors.white} />}
-        title="Order Checkout"
-        onRightPress={()=>navigation.navigate('Profile')}
-      />
+      <ScreenHeader title={t('Checkout')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cart Items Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Items ({cartItems.length})</Text>
+          <Text style={styles.sectionTitle}>{t('Order Items ({count})', { count: cartItems.length })}</Text>
           <Ligne style={{ marginBottom: 12 }} />
           <FlatList
             data={cartItems}
@@ -205,34 +182,34 @@ const CheckoutScreen = ({ navigation }) => {
 
         {/* Summary Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <Text style={styles.sectionTitle}>{t('Order Summary')}</Text>
           <Ligne style={{ marginBottom: 12 }} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryLabel}>{t('Subtotal')}</Text>
             <Text style={styles.summaryValue}>{formatPriceMAD(subtotal)}</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tax (10%)</Text>
+            <Text style={styles.summaryLabel}>{t('Tax (10%)')}</Text>
             <Text style={styles.summaryValue}>{formatPriceMAD(tax)}</Text> 
                      </View>
 
           <Ligne style={{ marginVertical: 8 }} />
 
           <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalLabel}>{t('Total')}</Text>
             <Text style={styles.totalAmount}>{formatPriceMAD(total)}</Text>
           </View>
         </View>
 
         {/* Delivery Information Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Information</Text>
+          <Text style={styles.sectionTitle}>{t('Delivery Information')}</Text>
           <Ligne style={{ marginBottom: 12 }} />
 
           <AppTextInput
-            placeholder="Delivery Address"
+            placeholder={t('Delivery Address')}
             value={deliveryAddress}
             onChangeText={setDeliveryAddress}
             editable={!isProcessing}
@@ -240,7 +217,7 @@ const CheckoutScreen = ({ navigation }) => {
           />
 
           <AppTextInput
-            placeholder="Phone Number"
+            placeholder={t('Phone Number')}
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
@@ -249,7 +226,7 @@ const CheckoutScreen = ({ navigation }) => {
           />
 
           <AppTextInput
-            placeholder="Special Instructions (Optional)"
+            placeholder={t('Special Instructions (Optional)')}
             value={specialInstructions}
             onChangeText={setSpecialInstructions}
             multiline
@@ -261,16 +238,16 @@ const CheckoutScreen = ({ navigation }) => {
         {/* Place Order Button */}
         <View style={styles.actionSection}>
           <AppButton
-            title={isProcessing ? 'Processing...' : 'Place Order'}
+            title={isProcessing ? t('Processing...') : t('Place Order')}
             color="primary2"
             onPress={handlePlaceOrder}
             disabled={isProcessing}
             buttonStyle={styles.placeOrderButton}
           />
           <AppButton
-            title="Continue Shopping"
+            title={t('Continue Shopping')}
             color="primary1"
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('Main', { screen: 'Home' })}
             disabled={isProcessing}
             buttonStyle={styles.continueButton}
           />
@@ -280,7 +257,7 @@ const CheckoutScreen = ({ navigation }) => {
       {isProcessing && (
         <View style={styles.processingOverlay}>
           <ActivityIndicator size="large" color={colors.primary2} />
-          <Text style={styles.processingText}>Processing your order...</Text>
+          <Text style={styles.processingText}>{t('Processing your order...')}</Text>
         </View>
       )}
     </View>
@@ -349,7 +326,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   quantityButton: {
-    padding: 6,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -377,7 +355,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   deleteButton: {
-    padding: 4,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   summaryRow: {
     flexDirection: 'row',

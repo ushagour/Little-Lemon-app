@@ -3,6 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const OrderContext = createContext();
 
+// No backend: status is simulated from the order's age (seconds).
+const STAGES = [['delivered', 180], ['ready', 90], ['preparing', 30]];
+
+const simulatedStatus = (order) => {
+  if (order.status === 'cancelled' || order.status === 'delivered') return order.status;
+  const age = (Date.now() - new Date(order.date).getTime()) / 1000;
+  const stage = STAGES.find(([, after]) => age >= after);
+  return stage ? stage[0] : 'placed';
+};
+
 export const OrderProvider = ({ children }) => {
   const ORDERS_KEY = '@littlelemon_orders';
   const [orders, setOrders] = useState([]);
@@ -13,6 +23,23 @@ export const OrderProvider = ({ children }) => {
   useEffect(() => {
     loadOrders();
   }, []);
+
+  useEffect(() => {
+    const advance = () => {
+      setOrders((current) => {
+        const next = current.map((o) => {
+          const status = simulatedStatus(o);
+          return status === o.status ? o : { ...o, status, read: false };
+        });
+        if (next.every((o, i) => o === current[i])) return current;
+        AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(next)).catch(() => {});
+        return next;
+      });
+    };
+    advance();
+    const id = setInterval(advance, 10000);
+    return () => clearInterval(id);
+  }, [isLoading]);
 
   // Update unread count whenever orders change
   useEffect(() => {

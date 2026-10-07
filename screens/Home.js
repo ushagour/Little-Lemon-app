@@ -1,306 +1,194 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSQLiteContext } from 'expo-sqlite';
 import {
-  StyleSheet,
-  Text,
-  View,
-  ImageBackground,
-  FlatList,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  RefreshControl,
-} from 'react-native';
-import Header from '../components/Header';
-import colors from '../config/colors';
-
-import {useSQLiteContext} from 'expo-sqlite';
-import { getAllItems,
-   ensureMenuTable,
-   insertMenuIntoSQLite,
-   searchItemsByText,insertMenuIfNotExists,clearMenuTable } from '../database/queries';
-
+  getAllItems,
+  ensureMenuTable,
+  insertMenuIntoSQLite,
+  searchItemsByText,
+  insertMenuIfNotExists,
+} from '../database/queries';
 import Card from '../components/ui/Card';
-import SeparatorView from '../components/ui/SeparatorView';
-import SearchView from '../components/Forms/SearchView';
-import { useAuth } from '../hooks/useAuth';
-import Hero from '../components/Hero';
+import { MenuCardSkeleton } from '../components/ui/Skeleton';
+import SearchBar from '../components/Forms/SearchBar';
+import CategoryChips from '../components/ui/CategoryChips';
 import getEnvVars from '../config/environment';
+import { useFeedback } from '../context/FeedbackContext';
+import { colors, spacing, typography, layout } from '../config/theme';
+import { useLanguage } from '../context/LanguageContext';
 
+const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
+const LIST_BOTTOM_SPACE = layout.tabBarHeight + 96;
 
-// Custom hook: debounce a value with a delay (in ms)
 function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  const timerRef = useRef(null);
-
+  const [debounced, setDebounced] = useState(value);
   useEffect(() => {
-    timerRef.current = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => clearTimeout(timerRef.current);
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
   }, [value, delay]);
-
-  return debouncedValue;
+  return debounced;
 }
 
-
-
-
-
-
-function Home({ navigation }) {
-  const db = useSQLiteContext();
-  const { user } = useAuth();
-  const [query, setQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const { API_URL } = getEnvVars;
-  
-
-  const debouncedQuery = useDebounce(query, 500); // debounce for 500ms
-  const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [menuData, setMenuData] = useState([]);
-  
-
-
-  useEffect(() => {
-    
-
-    // clearMenuTable(db).catch(err => console.error('Clear table error', err));
-
-
-
-    init();
-  }, [db]);
-
-
-  
-    const init = async () => {
-      if (!db) {
-        // no sqlite available -> fallback to fetch
-        await loadFromRemoteAndSetState(data => setMenuData(data));
-        
-        return;
-      }
-
-      try {
-        // 1) make sure table exists
-        await ensureMenuTable(db);
-
-        // 2) check existing rows
-        const rows = await getAllItems(db); // returns [] if empty
-        if (rows && rows.length > 0) {
-          setMenuData(rows.map(mapRowToUI));
-          return;
-        }
-
-        // 3) empty DB -> fetch API_URL, insert all, then load from DB
-        const res = await fetch(API_URL);
-        const json = await res.json();
-        const items = Array.isArray(json) ? json : json.menu || [];
-
-        // insert into DB (insertMenuIntoSQLite expects array or single)
-        await insertMenuIntoSQLite(db, items);
-
-        // re-read from DB and set state
-        const loaded = await getAllItems(db);
-        
-        setMenuData(loaded.map(mapRowToUI));
-      } catch (e) {
-        console.error('Init DB/fetch error', e);
-        // fallback to API_URL fetch if DB flow failed
-        await loadFromRemoteAndSetState(data => setMenuData(data));
-      }
-    };
-
-
-
-  // Effect: run search when debouncedQuery changes (after 500ms pause)
-  useEffect(() => {
-
-    // clearMenuTable(db).catch(err => console.error('Clear table error', err));
-    if (debouncedQuery.trim() === '') {
-      // if query is empty, reload all items
-      getAllItems(db).then((rows) => {
-        if (rows && rows.length > 0) {
-          setMenuData(rows.map(mapRowToUI));
-        }
-      }).catch(err => console.error('Reload all items error', err));
-      return;
-    }
-
-    // search by name in DB
-    searchItemsByText(db, debouncedQuery).then((results) => {
-      const uiResults = results.map(mapRowToUI);
-      setMenuData(uiResults);
-    }).catch((err) => {
-      console.error('Search error', err);
-    });
-  }, [debouncedQuery, db]);
-
-
-  // Filter by category only (search/debounce already applied to menuData)
-  const filtered = menuData.filter((m) => {
-    const matchesCategory = selectedCategory === 'All' ? true : m.category === selectedCategory;
-    return matchesCategory;
-  });
-
-const onRefresh = async () => {
-  setRefreshing(true);
-  try {
-    // Fetch API_URL data
-    const res = await fetch(API_URL);
-    const json = await res.json();
-    const items = Array.isArray(json) ? json : json.menu || [];
-
-    // Insert only new items that don't already exist
-    await insertMenuIfNotExists(db, items);
-
-    // Reload from DB and update state
-    const loaded = await getAllItems(db);
-    setMenuData(loaded.map(mapRowToUI));
-  } catch (e) {
-    console.error('Refresh error', e);
-  } finally {
-    setRefreshing(false);
-  }
-};
-    
-
-  
-
-  
-  return (
-    <View style={styles.container}>
-
-
-
-      <Header
-        onRightPress={() => {
-          navigation.navigate('Profile');
-        }}
-      />
-
-          <Hero>
-                   <SearchView 
-                    searchText={query}
-                    onChange={setQuery} 
-                    />
-          </Hero>
-
-
-      <View style={styles.listHeader}>
-        <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
-        <Text style={styles.sectionSub}>{filtered.length} items available.</Text>
-      </View>
-
-      <View style={styles.categoryWrap}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.tagButton, selectedCategory === cat ? styles.tagButtonSelected : null]}
-              onPress={() => setSelectedCategory(cat)}
-            >
-              <Text style={[styles.tagText, selectedCategory === cat ? styles.tagTextSelected : null]}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <FlatList
-       data={filtered} 
-       keyExtractor={(i) => i.id}
-        renderItem={({ item }) => <Card item={item} /> } 
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={SeparatorView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-       />
-    </View>
-  );
-};
-
-export default Home;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.secondary4 },
-
-
-  descriptionWrap: { paddingHorizontal: 16, paddingVertical: 12 },
- descriptionImage:{
-  width: 70,
-   height: 70,
-   borderRadius: 8,
-   
- },
-  description: { color: colors.white, lineHeight: 20 },
-  categoryWrap: { paddingBottom: 8 },
-  categoryScroll: { paddingHorizontal: 16, alignItems: 'center' },
-  tagButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: colors.secondary2,
-    marginRight: 8,
-  },
-  tagButtonSelected: { backgroundColor: colors.primary1 },
-  tagText: { color: '#333', fontFamily: 'Karla-Medium' },
-  tagTextSelected: { color: '#fff', fontFamily: 'Karla-Bold' },
-  listHeader: { padding: 16, paddingTop: 12 },
-  sectionTitle: { fontSize: 20, fontFamily: 'Karla-Bold' },
-  sectionSub: { color: '#666', marginTop: 4 },
-  list: { paddingHorizontal: 16, paddingBottom: 32 },
-
-  addButton: {
-    backgroundColor: colors.primary1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  addButtonText: { color: '#fff', fontWeight: '600' },
-});
-
-// Map a DB row to the UI shape expected by the list
 function mapRowToUI(r, idx = 0) {
-  const tags = typeof r.tags === 'string' ? JSON.parse(r.tags || '[]') : (Array.isArray(r.tags) ? r.tags : []);
+  const tags = typeof r.tags === 'string' ? JSON.parse(r.tags || '[]') : Array.isArray(r.tags) ? r.tags : [];
   const available = typeof r.available === 'number' ? r.available === 1 : r.available !== false;
-  
+
   return {
     id: r.id ? String(r.id) : String(idx + 1),
     name: r.name || 'Untitled',
     description: r.description || '',
     price: (typeof r.price === 'number' ? r.price : parseFloat(r.price) || 0).toFixed(2),
-    category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',//capitalization handled in filter
+    category: r.category ? r.category.charAt(0).toUpperCase() + r.category.slice(1) : 'Uncategorized',
     image: r.image,
     rating: r.rating || null,
     prepareTime: r.prepareTime || '',
-    available: available,
-    tags: tags,
+    available,
+    tags,
   };
 }
-//this method fetches from API_URL api if there is no sql database available
 
-async function loadFromRemoteAndSetState() {
-  try {
-
-      const res = await fetch(API_URL);
-      const json = await res.json();
-      const items = Array.isArray(json) ? json : json.menu || [];
-      const ui = items.map((it, idx) => ({
-        id: it.id ? String(it.id) : String(idx + 1),
-        title: it.name || it.title || 'Untitled',
-        description: it.description || '',
-        price: (typeof it.price === 'number' ? it.price : parseFloat(it.price) || 0).toFixed(2),
-        category: it.category ? it.category.charAt(0).toUpperCase() + it.category.slice(1) : 'Uncategorized',//capitalization handled in filter
-      image: it.image,
-      }));
-      return ui;
-
-
-      
-  } catch (err) {
-    console.error('Remote load failed', err);
-  }
+async function fetchRemoteItems() {
+  const res = await fetch(getEnvVars.API_URL);
+  const json = await res.json();
+  return Array.isArray(json) ? json : json.menu || [];
 }
 
+function Home() {
+  const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
+  const { showToast } = useFeedback();
+  const { t } = useLanguage();
+  const [query, setQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [menuData, setMenuData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const ready = useRef(false);
+
+  const debouncedQuery = useDebounce(query, 400);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await ensureMenuTable(db);
+        let rows = await getAllItems(db);
+        if (!rows || rows.length === 0) {
+          await insertMenuIntoSQLite(db, await fetchRemoteItems());
+          rows = await getAllItems(db);
+        }
+        setMenuData(rows.map(mapRowToUI));
+      } catch (e) {
+        try {
+          setMenuData((await fetchRemoteItems()).map(mapRowToUI));
+        } catch {
+          showToast(t('Could not load the menu. Pull down to retry.'), { type: 'error' });
+        }
+      } finally {
+        ready.current = true;
+        setLoading(false);
+      }
+    };
+    init();
+  }, [db, showToast, t]);
+
+  useEffect(() => {
+    if (!ready.current) return;
+    const run = async () => {
+      try {
+        const rows = debouncedQuery.trim() ? await searchItemsByText(db, debouncedQuery) : await getAllItems(db);
+        setMenuData((rows || []).map(mapRowToUI));
+      } catch (e) {
+        showToast(t('Search failed. Please try again.'), { type: 'error' });
+      }
+    };
+    run();
+  }, [debouncedQuery, db, showToast, t]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await insertMenuIfNotExists(db, await fetchRemoteItems());
+      setMenuData((await getAllItems(db)).map(mapRowToUI));
+    } catch (e) {
+      showToast(t('Could not refresh the menu.'), { type: 'error' });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [db, showToast, t]);
+
+  const filtered = menuData.filter((m) => selectedCategory === 'All' || m.category === selectedCategory);
+
+  const header = (
+    <View style={styles.sticky}>
+      <View style={styles.searchWrap}>
+        <SearchBar value={query} onChangeText={setQuery} />
+      </View>
+      <CategoryChips categories={CATEGORIES} selected={selectedCategory} onSelect={setSelectedCategory} />
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.brandBar, { paddingTop: insets.top + spacing.sm }]}>
+        <Image source={require('../assets/Logo.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="Marrakech Bites" />
+        <Text style={styles.tagline}>{t('Moroccan-inspired street food.')}</Text>
+      </View>
+
+      <FlatList
+        data={loading ? [] : filtered}
+        keyExtractor={(i) => i.id}
+        renderItem={({ item, index }) => (
+          <View style={styles.cardWrap}>
+            <Card item={item} index={index} />
+          </View>
+        )}
+        ListHeaderComponent={header}
+        stickyHeaderIndices={[0]}
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.skeletons}>
+              {[0, 1, 2].map((k) => (
+                <MenuCardSkeleton key={k} />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>{t('No dishes found')}</Text>
+              <Text style={styles.emptyText}>{t('Try a different search or category.')}</Text>
+            </View>
+          )
+        }
+        contentContainerStyle={{ paddingBottom: LIST_BOTTOM_SPACE }}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+}
+
+export default Home;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  brandBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  logo: { width: 150, height: 36 },
+  tagline: { ...typography.caption, color: colors.textMuted, flexShrink: 1, textAlign: 'right' },
+  sticky: { backgroundColor: colors.background, paddingBottom: spacing.sm },
+  searchWrap: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
+  skeletons: { paddingHorizontal: spacing.md, gap: spacing.md },
+  cardWrap: { paddingHorizontal: spacing.md },
+  empty: { alignItems: 'center', padding: spacing.xl },
+  emptyTitle: { ...typography.h2, color: colors.text },
+  emptyText: { ...typography.body, color: colors.textMuted, marginTop: spacing.xs },
+});

@@ -69,7 +69,7 @@ export const CartProvider = ({ children }) => {
           ? {
               ...item,
               quantity,
-              totalPrice: (item.price + (item.extras?.reduce((sum, e) => sum + (e.price || 0), 0) || 0)) * quantity,
+              totalPrice: ((parseFloat(item.price) || 0) + (item.extras?.reduce((sum, e) => sum + (parseFloat(e.price) || 0), 0) || 0)) * quantity,
             }
           : item
       );

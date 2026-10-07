@@ -1,295 +1,183 @@
-import { StyleSheet, Text, View, ActivityIndicator, Dimensions } from 'react-native';
-import React, { useState, useCallback, useMemo } from 'react';
-import { Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
-import colors from '../../config/colors';
-import { getImageUrl } from '../../api/getImageUrl';
 import { useNavigation } from '@react-navigation/native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { colors, layout, radii, shadows, spacing, typography } from '../../config/theme';
+import { getImageUrl } from '../../api/getImageUrl';
 import { formatPriceMAD } from '../../utils/currency';
+import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
+import { useFeedback } from '../../context/FeedbackContext';
+import { hapticSuccess, hapticWarning } from '../../utils/haptics';
+import { Skeleton } from './Skeleton';
+import { useLanguage } from '../../context/LanguageContext';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
-
-/**
- * Card component with enhanced image handling.
- * Features:
- * - Automatic image loading and error detection
- * - Loading spinner while image loads
- * - Fallback UI with icon when image fails to load
- * - Responsive sizing for different devices
- * - Accessibility support
- */
-const Card = React.memo(({ item }) => {
+const Card = React.memo(({ item, index = 0 }) => {
   const navigation = useNavigation();
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { showToast, showAddedToCart } = useFeedback();
+  const { t } = useLanguage();
+  const [loaded, setLoaded] = useState(false);
+  const scale = useSharedValue(1);
+  const addScale = useSharedValue(1);
 
-  const handleImageLoad = useCallback(() => {
-    setImageLoading(false);
-  }, []);
+  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const addStyle = useAnimatedStyle(() => ({ transform: [{ scale: addScale.value }] }));
 
-  const handleImageError = useCallback((error) => {
-    // console.warn(`Image failed to load for ${item.name}:`, item.image, error);
-    setImageLoading(false);
-    setImageError(true);
-  }, [item.name, item.image]);
+  const unavailable = item.available === false;
+  const canOrder = Boolean(user && !user.isGuest && user.isUserOnboarded);
 
-  const imageSize = useMemo(() => (isTablet ? 90 : 70), []);
-  const isValidUrl = useMemo(
-    () => getImageUrl(item.image) && (getImageUrl(item.image).startsWith('https://') || getImageUrl(item.image).startsWith('https://')),
-    [item.image]
-  );
+  const handleQuickAdd = async () => {
+    if (unavailable) return;
+    if (!canOrder) {
+      hapticWarning();
+      showToast(t('Sign in to add items to your cart.'), {
+        type: 'info',
+        action: { label: t('Sign in'), onPress: () => navigation.navigate('Login') },
+      });
+      return;
+    }
+    addScale.value = withSpring(0.8, { damping: 6 }, () => {
+      addScale.value = withSpring(1);
+    });
+    const ok = await addToCart(item, [], 1);
+    if (ok) {
+      hapticSuccess();
+      showAddedToCart(item, 1, parseFloat(item.price) || 0);
+    } else {
+      showToast(t('Could not add the item. Please try again.'), { type: 'error' });
+    }
+  };
+
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('Details', { item })}
-      activeOpacity={0.8}
-      testID={`card-${item.name}`}
-    >
-      <View style={styles.cardBody}>
-        {/* Title with Rating */}
-        <View style={styles.titleRow}>
-          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-            {item.name}
-          </Text>
-          {item.rating && (
-            <View style={styles.ratingBadge}>
-              <MaterialIcons name="star" size={14} color="#FFB81C" />
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 6) * 50).duration(300)}>
+      <AnimatedPressable
+        style={[styles.card, cardStyle]}
+        onPress={() => navigation.navigate('Details', { item })}
+        onPressIn={() => {
+          scale.value = withSpring(0.98, { damping: 20 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 20 });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.name}, ${formatPriceMAD(item.price)}`}
+        testID={`card-${item.name}`}
+      >
+        <View style={styles.imageWrap}>
+          <Image
+            source={{ uri: getImageUrl(item.image) }}
+            style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+            recyclingKey={item.id}
+            onLoadEnd={() => setLoaded(true)}
+            accessibilityLabel={`${item.name} photo`}
+          />
+          {!loaded ? <Skeleton height="100%" radius={0} style={StyleSheet.absoluteFill} /> : null}
+
+          {item.rating ? (
+            <View style={styles.rating}>
+              <MaterialIcons name="star" size={14} color="#F5A623" />
               <Text style={styles.ratingText}>{item.rating}</Text>
             </View>
-          )}
-        </View>
+          ) : null}
 
-        {/* Availability Badge */}
-        {item.available === false && (
-          <View style={styles.unavailableBadge}>
-            <Text style={styles.unavailableText}>Out of Stock</Text>
-          </View>
-        )}
-
-        <Text style={styles.cardDescription} numberOfLines={4} ellipsizeMode="tail">
-          {item.description}
-        </Text>
-
-        {/* Tags */}
-        {item.tags && item.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {item.tags.map((tag, index) => (
-              <View key={index} style={[styles.tag, styles[`tag_${tag}`]]}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Price and Prepare Time */}
-        <View style={styles.footerRow}>
-          <Text style={styles.cardPrice}>{formatPriceMAD(item.price)}</Text>
-          {item.prepareTime && (
-            <View style={styles.prepareTimeContainer}>
-              <MaterialIcons name="schedule" size={14} color="#999" />
-              <Text style={styles.prepareTimeText}>{item.prepareTime}</Text>
+          {unavailable ? (
+            <View style={styles.soldOut}>
+              <Text style={styles.soldOutText}>{t('Out of stock')}</Text>
             </View>
+          ) : (
+            <AnimatedPressable
+              onPress={handleQuickAdd}
+              style={[styles.addButton, addStyle]}
+              accessibilityRole="button"
+              accessibilityLabel={t('Add {name} to cart', { name: item.name })}
+            >
+              <MaterialIcons name="add" size={28} color={colors.text} />
+            </AnimatedPressable>
           )}
         </View>
-      </View>
 
-      {/* Image with loading and error states */}
-      <View style={[styles.cardImageContainer, { width: imageSize, height: imageSize }]}>
-        {isValidUrl ? (
-          <>
-            {imageLoading && (
-              <ActivityIndicator size="small" color={colors.primary1} style={styles.loadingSpinner} />
-            )}
-            <Image
-              source={{ uri: getImageUrl(item.image) }}
-              style={[styles.cardImage, { width: imageSize, height: imageSize }]}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              accessible={true}
-              accessibilityLabel={`${item.name} image`}
-              testID={`card-image-${item.name}`}
-            />
-            {imageError && (
-              <View style={[styles.cardImageFallback, { width: imageSize, height: imageSize }]}>
-                <MaterialIcons name="image-not-supported" size={24} color={colors.primary1} />
-              </View>
-            )}
-          </>
-        ) : (
-          <View style={[styles.cardImageFallback, { width: imageSize, height: imageSize }]}>
-            <MaterialIcons name="no-photography" size={24} color={colors.primary1} />
-            <Text style={styles.fallbackText}>No image</Text>
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={styles.price}>{formatPriceMAD(item.price)}</Text>
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
+          <Text style={styles.description} numberOfLines={2}>
+            {item.description}
+          </Text>
+          {item.prepareTime ? (
+            <View style={styles.meta}>
+              <MaterialIcons name="schedule" size={14} color={colors.textSubtle} />
+              <Text style={styles.metaText}>{item.prepareTime}</Text>
+            </View>
+          ) : null}
+        </View>
+      </AnimatedPressable>
+    </Animated.View>
   );
+});
 
-});  
-  export default Card;
+export default Card;
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardImageContainer: {
-    position: 'relative',
-    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     overflow: 'hidden',
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: isTablet ? 16 : 12,
+    ...shadows.md,
   },
-  cardImage: {
-    borderRadius: 8,
-  },
-  cardImageFallback: {
+  imageWrap: { height: 168, backgroundColor: colors.border },
+  image: { width: '100%', height: '100%' },
+  rating: {
     position: 'absolute',
-    borderRadius: 8,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
   },
-  loadingSpinner: {
+  ratingText: { ...typography.caption, color: colors.text },
+  addButton: {
     position: 'absolute',
-    zIndex: 10,
-  },
-  fallbackText: {
-    fontSize: 10,
-    color: '#999',
-    marginTop: 4,
-    fontFamily: 'Karla-Regular',
-  },
-  cardBody: {
-    flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    width: layout.touchTarget,
+    height: layout.touchTarget,
+    borderRadius: layout.touchTarget / 2,
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+    ...shadows.md,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'Karla-Bold',
-    color: colors.textPrimary,
-    flex: 1,
+  soldOut: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.dangerSoft,
   },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF8DC',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 2,
-    color: '#333',
-    fontFamily: 'Karla-Bold',
-  },
-  unavailableBadge: {
-    backgroundColor: '#FFE5E5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 6,
-    alignSelf: 'flex-start',
-  },
-  unavailableText: {
-    fontSize: 11,
-    color: '#C41E3A',
-    fontWeight: '600',
-    fontFamily: 'Karla-Bold',
-  },
-  cardDescription: {
-    color: '#666',
-    fontSize: 13,
-    fontFamily: 'Karla-Regular',
-    marginBottom: 6,
-    lineHeight: 18,
-    minHeight: 72,
-    maxHeight: 72,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 4,
-  },
-  tag_vegetarian: {
-    backgroundColor: '#E8F5E9',
-  },
-  tag_vegetarian_text: {
-    color: '#2E7D32',
-  },
-  tag_healthy: {
-    backgroundColor: '#E3F2FD',
-  },
-  tag_healthy_text: {
-    color: '#1565C0',
-  },
-  tag_fresh: {
-    backgroundColor: '#FCE4EC',
-  },
-  tag_fresh_text: {
-    color: '#C2185B',
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: '500',
-    fontFamily: 'Karla-Bold',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  cardPrice: {
-    color: colors.secondary1,
-    fontWeight: '700',
-    fontFamily: 'Karla-Bold',
-    fontSize: 16,
-  },
-  prepareTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  prepareTimeText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Karla-Regular',
-  },
+  soldOutText: { ...typography.caption, color: colors.danger },
+  body: { padding: spacing.md },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  title: { ...typography.title, color: colors.text, flex: 1 },
+  price: { ...typography.title, color: colors.peach },
+  description: { ...typography.small, color: colors.textMuted, marginTop: spacing.xs },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
+  metaText: { ...typography.caption, color: colors.textSubtle },
 });
-

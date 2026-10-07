@@ -1,15 +1,17 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import React from 'react'
 import colors from '../config/colors';
+import { useLanguage } from '../context/LanguageContext';
 
 const Hero = React.memo(({ children }) => {
+  const { t } = useLanguage();
   return (
     <View style={styles.hero}>
       <View style={styles.heroOverlay} />
       <View style={styles.heroContent}>
         <View style={styles.heroText}>
-          <Text style={styles.heroTitle}>Little Lemon</Text>
-          <Text style={styles.heroSubtitle}>We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.</Text>
+          <Text style={styles.heroTitle}>Marrakech Bites</Text>
+          <Text style={styles.heroSubtitle}>{t('Fast, fresh bites with Moroccan-inspired flavor.')}</Text>
         </View>
         <Image source={require('../assets/Hero.png')} style={styles.heroRightImage} />
       </View>
